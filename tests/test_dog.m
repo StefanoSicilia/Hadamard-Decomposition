@@ -1,4 +1,4 @@
-%% Comparison of HadDec_BCD, Had_manBCD and HadDec_Manopt on colored images
+%% HadDec on dog colored image
 % It takes about 30 minutes
 
     %% Methods, parameters and structures
@@ -18,7 +18,7 @@
         'Hblock',Hblock,'Wblock',Wblock,'tol',0.5*tol^2);   
     opts.momentum=[0.75,1,1.05,1.01,1.5];
     %opts.momentum=[0,0,0,0,1];
-    opts.maxtime=1; %240
+    opts.maxtime=240; 
     r2=min([m,n,2*r]);
 
     % Note: total time required by HadDec is 9*opts.maxtime 
