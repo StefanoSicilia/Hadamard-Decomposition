@@ -81,7 +81,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,opts)
             H2=H2/sqrt(normX);
         case 'rand'
             [m,n]=size(X);
-            rng(6)
+            rng(1)
             W1=rand(m,r);
             H1=rand(n,r);
             W2=rand(m,r);
@@ -160,4 +160,5 @@ function [W1,H1,W2,H2,info]=HadDec(X,opts)
     H2=alpha*H2;
 
 end
+
 
