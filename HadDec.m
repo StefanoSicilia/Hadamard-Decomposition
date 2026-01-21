@@ -93,7 +93,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,opts)
             error('Initialization method not available.')
     end
 
-    % Selection of the method: manBCD, BCD or Manopt
+    % Selection of the method: manBCD, BCD, Manopt or manBCDsparse
     switch opts.method
         case 'manBCD'
             loop=@(W1,H1,W2,H2) loop_manBCD(X,W1,H1,W2,H2,opts);
@@ -160,3 +160,4 @@ function [W1,H1,W2,H2,info]=HadDec(X,opts)
     H2=alpha*H2;
 
 end
+
