@@ -1,5 +1,5 @@
 function [W1,H1,W2,H2,info]=loop_Manopt(X,W1,H1,W2,H2,opts)
-%% loop_Manopt: Main cycle for HadDec_Manopt
+%% loop_Manopt: Main cycle for HadDec
 % Performs Riemannian gradient descent for Hadamard decomposition. See
 % HadDec_Manopt for more details.
 
@@ -36,5 +36,6 @@ function [W1,H1,W2,H2,info]=loop_Manopt(X,W1,H1,W2,H2,opts)
     H1=X1.V;
     W2=X2.U*X2.S;
     H2=X2.V;
+
 
 end
