@@ -1,5 +1,5 @@
 function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
-%% loop_manBCD: Main cycle for HadDec_manBCD
+%% loop_manBCD: Main cycle for HadDec
 % Performs Riemannian gradient descent for Hadamard decomposition. See
 % HadDec_manBCD for more details.
 
@@ -91,5 +91,6 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
     % Output
     err(i)=0.5*norm(X-W*H','fro')^2;
     info=struct('err',sqrt(2*err(1:i)),'time',time(1:i));
+
 
 end
