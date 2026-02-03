@@ -1,5 +1,5 @@
 function [W1,H1,W2,H2,info]=loop_BCD(X,W1,H1,W2,H2,opts)
-%% loop_BCD: Main cycle for HadDec_BCD
+%% loop_BCD: Main cycle for HadDec
 % Performs Riemannian gradient descent for Hadamard decomposition. See
 % HadDec_BCD for more details.
 
@@ -44,5 +44,6 @@ function [W1,H1,W2,H2,info]=loop_BCD(X,W1,H1,W2,H2,opts)
     % Output
     err(i)=norm(X-(W1*H1').*(W2*H2'),'fro');
     info=struct('err',err(1:i),'time',time(1:i));
+
 
 end
