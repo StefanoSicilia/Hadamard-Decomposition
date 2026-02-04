@@ -6,7 +6,7 @@ where $W_1,W_2\in \mathbb{R}^{m\times r}$ and $H_1,H_2\in \mathbb{R}^{n\times r}
 
 This code implements the algorithms from the paper
 
-[GSSV26] N. Gillis, S. Saha, S. Sicilia and A. Vandaele, Manifold-based approaches for the Hadamard Decomposition of a matrix, January 2026.
+[GSSV26] N. Gillis, S. Saha, S. Sicilia and A. Vandaele, Manifold-based Algorithms for the Hadamard Decomposition, February 2026.
 
 The function HadDec.m implements all the algorithms discussed in the paper and, depending on the option chosen, it selects the method for the decomposition among
 1) manBCD: it uses a 2 block coordinate descend algorithm for the rank-$r^2$ matrices $W=W_1\textbullet W_2$ and $H=H_1\textbullet H_2$ and it optimizes on $\mathcal{B}\_{m,r}$ and $\mathcal{B}\_{n,r}$ respectively, where $\mathcal{B}_{m,r}$ is the manifold of $m\times r^2$ matrices that admit a face-split decomposition of size $r$.
