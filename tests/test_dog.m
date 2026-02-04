@@ -48,17 +48,17 @@
 
         % manBCD
         j=1;
-        [W1{k,j},H1{k,j},W2{k,j},H2{k,j},info{k,j}]=HadDec(X(:,:,k),opts_1);
+        [W1{k,j},H1{k,j},W2{k,j},H2{k,j},info{k,j}]=HadDec(X(:,:,k),r,opts_1);
         fin_err(k,j)=info{k,j}.err(end);
 
         % BCD
         j=2;
-        [W1{k,j},H1{k,j},W2{k,j},H2{k,j},info{k,j}]=HadDec(X(:,:,k),opts_2);
+        [W1{k,j},H1{k,j},W2{k,j},H2{k,j},info{k,j}]=HadDec(X(:,:,k),r,opts_2);
         fin_err(k,j)=info{k,j}.err(end);
 
         % Manopt
         j=3;
-        [W1{k,j},H1{k,j},W2{k,j},H2{k,j},info{k,j}]=HadDec(X(:,:,k),opts_3);
+        [W1{k,j},H1{k,j},W2{k,j},H2{k,j},info{k,j}]=HadDec(X(:,:,k),r,opts_3);
         fin_err(k,j)=info{k,j}.err(end);
         
         % SVD

@@ -1,4 +1,4 @@
-%% Script to test HadDec on synthetic data - low rank
+%% Script to test HadDec on synthetic data - low-rank
 % It takes a bit more than 3 hours
 
     %% Methods, parameters and structures
@@ -27,27 +27,24 @@
     for i=1:nsample
         rng(i)
         for j=1:nrank
-            opts_1.rank=j;
-            opts_2.rank=j;
-            opts_3.rank=j;
             r2=2*j;
             X=rand(m,r2)*rand(r2,n);
             % 1) manBCD
-            [~,~,~,~,info_man]=HadDec(X,opts_1);
+            [~,~,~,~,info_man]=HadDec(X,j,opts_1);
             err(i,j,1)=info_man.err(end);
             % 2) BCD
             opts.method='BCD';
-            [~,~,~,~,info_BCD]=HadDec(X,opts_2);
+            [~,~,~,~,info_BCD]=HadDec(X,j,opts_2);
             err(i,j,2)=info_BCD.err(end);
             % 3) Manopt
-            [~,~,~,~,info_Manopt]=HadDec(X,opts_3);
+            [~,~,~,~,info_Manopt]=HadDec(X,j,opts_3);
             err(i,j,3)=info_Manopt.err(end);
             % 4) rank-2r SVD
             Xsvd=X/norm(X,'fro');
             [U,S,V]=svd(Xsvd);
             Sr2=S(1:r2,1:r2);
-            Ur2=U(:,1:r2)*Sr2;
-            Vr2=V(:,1:r2)*Sr2;
+            Ur2=U(:,1:r2);
+            Vr2=V(:,1:r2);
             err(i,j,4)=norm(Xsvd-Ur2*Sr2*Vr2','fro');
         end
     end 

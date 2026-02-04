@@ -24,14 +24,14 @@
     fprintf('%i) NG20 ...',i)
     m=19949;
     n=43586;
-    opts.rank=20;
+    r=20;
     X=load("./datasets/NG20.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'NG20'];
     i=i+1;
@@ -40,14 +40,14 @@
     fprintf('%i) classic ...',i)
     m=7094;
     n=41681;
-    opts.rank=4;
+    r=4;
     X=load("./datasets/classic.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'classic'];
     i=i+1;
@@ -56,14 +56,14 @@
     fprintf('%i) ohscal ...',i)
     m=11162;
     n=11465;
-    opts.rank=10;
+    r=10;
     X=load("./datasets/ohscal.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'ohscal'];
     i=i+1;
@@ -72,14 +72,14 @@
     fprintf('%i) k1b ...',i)
     m=2340;
     n=21839;
-    opts.rank=6;
+    r=6;
     X=load("./datasets/k1b.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'k1b'];
     i=i+1;
@@ -88,14 +88,14 @@
     fprintf('%i) Hitech ...',i)
     m=2301;
     n=10080;
-    opts.rank=6;
+    r=6;
     X=load("./datasets/hitech.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'hitech'];
     i=i+1;
@@ -104,14 +104,14 @@
     fprintf('%i) Reviews ...',i)
     m=4069;
     n=18483;
-    opts.rank=5;
+    r=5;
     X=load("./datasets/reviews.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'reviews'];
     i=i+1;
@@ -120,14 +120,14 @@
     fprintf('%i) Sports ...',i)
     m=8580;
     n=14870;
-    opts.rank=7;
+    r=7;
     X=load("./datasets/sports.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'sports'];
     i=i+1;
@@ -136,14 +136,14 @@
     fprintf('%i) la1 ...',i) 
     m=3204;
     n=31472;
-    opts.rank=6;
+    r=6;
     X=load("./datasets/la1.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'la1'];
     i=i+1;
@@ -152,14 +152,14 @@
     fprintf('%i) la12 ...',i)
     m=6279;
     n=31472;
-    opts.rank=6;
+    r=6;
     X=load("./datasets/la12.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'la12'];
     i=i+1;
@@ -168,14 +168,14 @@
     fprintf('%i) la2 ...',i)
     m=3075;
     n=31472;
-    opts.rank=6;
+    r=6;
     X=load("./datasets/la2.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'la2'];
     i=i+1;
@@ -184,14 +184,14 @@
     fprintf('%i) tr11 ...',i)
     m=414;
     n=6429;
-    opts.rank=9;
+    r=9;
     X=load("./datasets/tr11.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'tr11'];
     i=i+1;
@@ -200,14 +200,14 @@
     fprintf('%i) tr23 ...',i)
     m=204;
     n=5832;
-    opts.rank=6;
+    r=6;
     X=load("./datasets/tr23.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'tr23'];
     i=i+1;
@@ -216,14 +216,14 @@
     fprintf('%i) tr41 ...',i)
     m=878;
     n=7454;
-    opts.rank=10;
+    r=10;
     X=load("./datasets/tr41.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'tr41'];
     i=i+1;
@@ -232,14 +232,14 @@
     fprintf('%i) tr45 ...',i)
     m=690;
     n=8261;
-    opts.rank=10;
+    r=10;
     X=load("./datasets/tr45.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,opts);
-    r2=min([n,m,2*opts.rank]);
+    [~,~,~,~,info{i}]=HadDec(X,r,opts);
+    r2=min([n,m,2*r]);
     Xsvd=X/norm(X,'fro');
     [U,S,V]=svds(Xsvd,r2);
     errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n opts.rank errSVD info{i}.err(end) info{i}.init};
+    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
     fprintf(' done!\n')
     legendlabel=[legendlabel,'tr45'];
 

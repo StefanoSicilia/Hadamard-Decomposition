@@ -1,4 +1,5 @@
-%% Script to test HadDec on synthetic data
+%% Script to test HadDec on synthetic data - random data
+% It takes 50 minutes
 
     %% Methods, parameters and structures
     m=100; 
@@ -27,48 +28,27 @@
         rng(i)
         X=rand(m,n);
         for j=1:nrank
-            opts_1.rank=j;
-            opts_2.rank=j;
-            opts_3.rank=j;
             % 1) manBCD
-            [~,~,~,~,info_man]=HadDec(X,opts_1);
+            [~,~,~,~,info_man]=HadDec(X,j,opts_1);
             err(i,j,1)=info_man.err(end);
             % 2) BCD
             opts.method='BCD';
-            [~,~,~,~,info_BCD]=HadDec(X,opts_2);
+            [~,~,~,~,info_BCD]=HadDec(X,j,opts_2);
             err(i,j,2)=info_BCD.err(end);
             % 3) Manopt
-            [~,~,~,~,info_Manopt]=HadDec(X,opts_3);
+            [~,~,~,~,info_Manopt]=HadDec(X,j,opts_3);
             err(i,j,3)=info_Manopt.err(end);
             % 4) rank-2r SVD
             r2=2*j;
             Xsvd=X/norm(X,'fro');
             [U,S,V]=svd(Xsvd);
             Sr2=S(1:r2,1:r2);
-            Ur2=U(:,1:r2)*Sr2;
-            Vr2=V(:,1:r2)*Sr2;
+            Ur2=U(:,1:r2);
+            Vr2=V(:,1:r2);
             err(i,j,4)=norm(Xsvd-Ur2*Sr2*Vr2','fro');
         end
     end 
 
-    %% Store and plot results
-    % close all
-    % lw=1.3;
-    % err_mean=mean(err,1);
-    % err_std=std(err,1);
-    % x=1:nrank;
-    % color={[0.9 0.5 1],[1 0.9 0.5],[0.9 0.5 1],[0.9,0.9,0.5]};
-    % for k=1:4
-    %     curve1 = err_mean(:,:,k) + err_std(:,:,k);
-    %     curve2 = err_mean(:,:,k) - err_std(:,:,k);
-    %     x2 = [x, fliplr(x)];
-    %     inBetween = [curve1, fliplr(curve2)];
-    %     fill(x2, inBetween, color{k});
-    %     hold on;
-    %     semilogy(x, err_mean(:,:,k), 'Color', color{k}-0.1, 'LineWidth', lw);
-    % end
-    % legendlabel={'','manBCD','','BCD','','Manopt','','SVD'};
-    % legend(legendlabel,'Location','best')
    
     %% Store and plot results
     close all
@@ -86,38 +66,6 @@
     legendlabel={'manBCD','BCD','Manopt','SVD'};
     legend(legendlabel,'Location','best')
 
-    %% Display the results
-    % close all
-    % countfig=1;
-    % figure(countfig)
-    % lw=1.3;
-    % 
-    % % Plot objective functions versus iteration 
-    % legendlabel={};
-    % if fin_err_man_BCD<1e5
-    %     semilogy(info_man.err,'r-','LineWidth',lw)
-    %     hold on
-    %     legendlabel=[legendlabel,'Manifold-BCD'];
-    % end
-    % if fin_err_BCD<1e5
-    %     semilogy(info_BCD.err,'b--','LineWidth',lw)
-    %     hold on
-    %     legendlabel=[legendlabel,'BCD'];
-    % end
-    % if fin_err_Manopt<1e5
-    %     semilogy(info_Manopt.err,'g-','LineWidth',lw)
-    %     hold on
-    %     legendlabel=[legendlabel,'Manopt'];
-    % end   
-    % if fin_errSVDmatlab<1e5
-    %     maxl=max([length(info_BCD.err),length(info_Manopt.err),...
-    %         length(info_man.err)]);
-    %     f=fin_errSVDmatlab;
-    %     semilogy([0,maxl],[f,f],'-.','Color',[0.75,0.5,0],'LineWidth',lw)
-    %     hold on
-    %     legendlabel=[legendlabel,'SVDmatlab'];
-    % end
-    % legend(legendlabel,'Location','best')
 
 
 

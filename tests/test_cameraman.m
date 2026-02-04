@@ -1,11 +1,11 @@
-%% Script to test HadDec
+%% HadDec on cameraman image
 % It takes about 15 minutes
 
     %% Methods, parameters and structures
     rng(1)
     m=225;
     n=m;
-    r=15;
+    r=15; 
     X=double(imread('./datasets/cameraman.jpg'));
     X=X(:,:,1);
 
@@ -26,17 +26,17 @@
 
     % Manifold BCD
     opts.method='manBCD';
-    [W1_man,H1_man,W2_man,H2_man,info_man]=HadDec(X,opts);
+    [W1_man,H1_man,W2_man,H2_man,info_man]=HadDec(X,r,opts);
     fin_err_man_BCD=info_man.err(end);
 
     % Wertz et al. BCD
     opts.method='BCD';
-    [W1_BCD,H1_BCD,W2_BCD,H2_BCD,info_BCD]=HadDec(X,opts);
+    [W1_BCD,H1_BCD,W2_BCD,H2_BCD,info_BCD]=HadDec(X,r,opts);
     fin_err_BCD=info_BCD.err(end);
 
     % Manifold Manopt
     opts.method='Manopt';
-    [W1_Manopt,H1_Manopt,W2_Manopt,H2_Manopt,info_Manopt]=HadDec(X,opts);
+    [W1_Manopt,H1_Manopt,W2_Manopt,H2_Manopt,info_Manopt]=HadDec(X,r,opts);
     fin_err_Manopt=info_Manopt.err(end);
 
     % SVD of rank 2r

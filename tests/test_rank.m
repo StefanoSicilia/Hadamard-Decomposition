@@ -26,10 +26,9 @@
     for i=1:nsample
         rng(i)
         for j=1:nrank
-            opts.rank=j;
             r2=2*j;
             X=rand(m,r2)*rand(r2,n);
-            [~,~,~,~,info_Manopt]=HadDec(X,opts);
+            [~,~,~,~,info_Manopt]=HadDec(X,j,opts);
             err(i,j)=info_Manopt.err(end);
             init{i,j}=info_Manopt.init;
         end
@@ -42,7 +41,7 @@
     err_std=std(err,1);
     color={'g',[0.75,0.5,0]};
     ranks=1:nrank;
-    semilogy(ranks, err_mean(:,:,k),'-o','Color',color{k},'LineWidth',lw);
+    semilogy(ranks, err_mean,'-o','Color',color{1},'LineWidth',lw);
     title('Mean of the errors')
     xlabel('Ranks')
     legendlabel={'Manopt'};
