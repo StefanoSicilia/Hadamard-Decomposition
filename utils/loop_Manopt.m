@@ -6,7 +6,7 @@ function [W1,H1,W2,H2,info]=loop_Manopt(X,W1,H1,W2,H2,opts)
     % Initialization and parameters
     tstart=tic;
     [m,n]=size(X);
-    r=opts.rank;
+    r=size(W1,2);
     P=struct('X1',struct('U',W1,'S',eye(r),'V',H1),'X2',...
         struct('U',W2,'S',eye(r),'V',H2));
 
@@ -37,6 +37,4 @@ function [W1,H1,W2,H2,info]=loop_Manopt(X,W1,H1,W2,H2,opts)
     W2=X2.U*X2.S;
     H2=X2.V;
 
-
 end
-
