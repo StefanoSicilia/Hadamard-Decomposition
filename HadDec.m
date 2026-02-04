@@ -1,11 +1,43 @@
-function [W1,H1,W2,H2,info]=HadDec(X,opts)
-%% HadDec: Hadamard (entrywise) Decomposition of a rectangular matrix
+function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
+%% HadDec: rank-r Hadamard (entrywise) decomposition of a matrix
 % Given an m-by-n matrix X and a rank r, it computes an approximate 
 % Hadamard Decomposition X~= (W1*H1').*(W2*H2'), where W1 and W2 are m-by-r
 % matrices and H1 and H2 are n-by-r matrices.
 % It minimizes the objective function 
 % 0.5*norm(X-(W1*H1').*(W2*H2'))^2/norm(X,'fro')^2 
-% in three possible ways, depending on opts.method:
+% in three possible ways, depending on the method chosen (see below).
+
+% Inputs:
+%   X: m-by-n matrix to be decomposed
+%   r: a postive integer for the rank-r Hadamard Decomposition
+%   opts: struct with fields
+%       1) method - the method chosen (see below) [default Manopt]
+%       2) init - initialization method (see below) [default all]
+%       3) maxit - maximum number of iterations [default 1e6]
+%       4) maxtime - maximum time allowed for the computation (this does 
+%       not include the error computation for opts.method='manBCDsparse')
+%       [default 10 seconds]
+%       5) tol - tolerance on the objective function [default 0.5e-30]
+%       6) momentum - parameters for the extrapolation 
+%       [default [0.75,1,1.05,1.01,1.5]]
+%       7) tau (only for manBCDs) - parameter for gradient descent stepsize
+%       [default 1.5]
+%       8) Wblock (only for manBCDs) - number of iteration per each W block
+%       [default 1]
+%       9) Hblock (only for manBCDs) - number of iteration per each H block
+%       [default 1]
+% See the tests for some practical choices of the parameters. Otherwise the
+% function can be called by just specifying the rank r as HadDec(X,r) with 
+% default parameters.
+%
+% Outputs:
+%   the matrices W1,H1,W2 and H2 of the decomposition
+%   a struct 'info' with fields
+%       1) err - vector with the relative errors (objective function)
+%       2) times - vector with the time required by each iteration
+%       3) init - string about the initialization method performed
+%
+% The methods available are
 %   1) manBCD: it uses a 2 block coordinate descend algorithm for the
 %   rank-r^2 matrices W=face_split(W1,W2) and H=face_split(H1,H2) and it 
 %   optimizes on Bmr and Bnr respectively, where Bmr is the manifold of 
@@ -16,28 +48,6 @@ function [W1,H1,W2,H2,info]=HadDec(X,opts)
 %   3) Manopt: it uses a product manifold for X1=W1*H1' and X2=W2*H2' and 
 %   it optimizes through Manopt to find an approximation X~=X1.*X2.
 %   4) manBCDsparse: like manBCD, but for large sparse matrices.
-%
-% Inputs:
-%   X: m-by-n matrix to be decomposed
-%   opts: struct with fields
-%       1) rank - the value of r
-%       2) init - initialization method (see HadDec_all_init)
-%       3) maxit - maximum number of iterations
-%       4) maxtime - maximum time allowed for the computation (this does 
-%       not include the error computation for opts.method='manBCDsparse')
-%       5) tol - tolerance on the objective function
-%       6) momentum - parameters for the extrapolation
-%       7) tau (only for manBCDs) - parameter for gradient descent stepsize 
-%       8) Wblock (only for manBCDs) - number of iteration per each W block
-%       9) Hblock (only for manBCDs) - number of iteration per each H block
-% See test_HadDec for some practical choices of the parameters.
-%
-% Outputs:
-%   the matrices W1,H1,W2 and H2 of the decomposition
-%   a struct 'info' with fields
-%       1) err - vector with the relative errors (objective function)
-%       2) times - vector with the time required by each iteration
-%       3) init - string about the initialization method performed
 %
 % The initializations available are:
 %   1) 'SVD-based' (see Init_SVDbased)
@@ -51,12 +61,55 @@ function [W1,H1,W2,H2,info]=HadDec(X,opts)
 %   7) 'given' uses as starting points given matrices W1,H1,W2 and H2 
 %   8) 'rand' random initialization
 
+    % Default parameters
+    if nargin<2
+        error('Not enough input arguments: missing matrix and/or desired rank.')
+    end
+
+    if nargin>3
+        error('Too many input arguments.')
+    end
+
+    if nargin==2
+        opts=struct('method','Manopt','init','all','maxit',1e6,...
+            'maxtime',10,'tol',0.5*1e-30,'tau',1.5,'Hblock',1,'Wblock',1);
+        opts.momentum=[0.75,1,1.05,1.01,1.5];
+    else 
+        % nargin==3
+        if ~isfield(opts,'method')
+            opts.method='Manopt';
+        end
+        if ~isfield(opts,'init')
+            opts.init='all';
+        end
+        if ~isfield(opts,'maxit')
+            opts.maxit=1e6;
+        end
+        if ~isfield(opts,'maxtime')
+            opts.maxtime=10;
+        end
+        if ~isfield(opts,'tol')
+            opts.tol=0.5*1e-30;
+        end
+        if ~isfield(opts,'tau')
+            opts.tau=1.5;
+        end
+        if ~isfield(opts,'Wblock')
+            opts.Wblock=1;
+        end
+        if ~isfield(opts,'Hblock')
+            opts.Hblock=1;
+        end
+        if ~isfield(opts,'momentum')
+            opts.momentum=[0.75,1,1.05,1.01,1.5];
+        end
+    end
+
     % Normalization of X
     normX=norm(X,'fro');
     X=X/normX;
 
     % Initialization and parameters
-    r=opts.rank;
     info_init=opts.init;
     switch info_init
         case 'all'
@@ -81,7 +134,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,opts)
             H2=H2/sqrt(normX);
         case 'rand'
             [m,n]=size(X);
-            rng(1)
+            rng(6)
             W1=rand(m,r);
             H1=rand(n,r);
             W2=rand(m,r);
@@ -93,7 +146,8 @@ function [W1,H1,W2,H2,info]=HadDec(X,opts)
             error('Initialization method not available.')
     end
 
-    % Selection of the method: manBCD, BCD, Manopt or manBCDsparse
+
+    % Selection of the method: manBCD, BCD or Manopt
     switch opts.method
         case 'manBCD'
             loop=@(W1,H1,W2,H2) loop_manBCD(X,W1,H1,W2,H2,opts);
@@ -107,6 +161,8 @@ function [W1,H1,W2,H2,info]=HadDec(X,opts)
         otherwise
             error('Method not available')
     end
+
+    
 
     % Main computation
     if ~strcmp(opts.init,'all') && ~strcmp(opts.init,'sparse')
