@@ -6,7 +6,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 % It minimizes the objective function 
 % 0.5*norm(X-(W1*H1').*(W2*H2'))^2/norm(X,'fro')^2 
 % in three possible ways, depending on the method chosen (see below).
-
+%
 % Inputs:
 %   X: m-by-n matrix to be decomposed
 %   r: a postive integer for the rank-r Hadamard Decomposition
@@ -216,5 +216,6 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     H2=alpha*H2;
 
 end
+
 
 
