@@ -6,29 +6,29 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 % It minimizes the objective function 
 % 0.5*norm(X-(W1*H1').*(W2*H2'))^2/norm(X,'fro')^2 
 % in three possible ways, depending on the method chosen (see below).
+% See the tests for some practical choices of the parameters. Otherwise the
+% function can be called by just specifying the rank r as 
+% [W1,H1,W2,H2,info]=HadDec(X,r) with default parameters (see below).
 %
 % Inputs:
 %   X: m-by-n matrix to be decomposed
 %   r: a postive integer for the rank-r Hadamard Decomposition
 %   opts: struct with fields
-%       1) method - the method chosen (see below) [default Manopt]
-%       2) init - initialization method (see below) [default all]
+%       1) method - the method chosen (see below) [default 'Manopt']
+%       2) init - initialization method (see below) [default 'all']
 %       3) maxit - maximum number of iterations [default 1e6]
 %       4) maxtime - maximum time allowed for the computation (this does 
-%       not include the error computation for opts.method='manBCDsparse')
+%       not include the error computation, since it might be removed)
 %       [default 10 seconds]
-%       5) tol - tolerance on the objective function [default 0.5e-30]
+%       5) tol - tolerance on the objective function [default 1e-16]
 %       6) momentum - parameters for the extrapolation 
 %       [default [0.75,1,1.05,1.01,1.5]]
 %       7) tau (only for manBCDs) - parameter for gradient descent stepsize
 %       [default 1.5]
-%       8) Wblock (only for manBCDs) - number of iteration per each W block
+%       8) Iter_W (only for manBCDs) - number of iteration per each W block
 %       [default 1]
-%       9) Hblock (only for manBCDs) - number of iteration per each H block
+%       9) Iter_H (only for manBCDs) - number of iteration per each H block
 %       [default 1]
-% See the tests for some practical choices of the parameters. Otherwise the
-% function can be called by just specifying the rank r as HadDec(X,r) with 
-% default parameters.
 %
 % Outputs:
 %   the matrices W1,H1,W2 and H2 of the decomposition
@@ -37,7 +37,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       2) times - vector with the time required by each iteration
 %       3) init - string about the initialization method performed
 %
-% The methods available are
+% The methods available are [default 'Manopt']:
 %   1) manBCD: it uses a 2 block coordinate descend algorithm for the
 %   rank-r^2 matrices W=face_split(W1,W2) and H=face_split(H1,H2) and it 
 %   optimizes on Bmr and Bnr respectively, where Bmr is the manifold of 
@@ -49,7 +49,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %   it optimizes through Manopt to find an approximation X~=X1.*X2.
 %   4) manBCDsparse: like manBCD, but for large sparse matrices.
 %
-% The initializations available are:
+% The initializations available are [default 'all'] :
 %   1) 'SVD-based' (see Init_SVDbased)
 %   2) 'FS' (see Init_FS)
 %   3) 'FSL' (see Init_FSL)
@@ -61,7 +61,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %   7) 'given' uses as starting points given matrices W1,H1,W2 and H2 
 %   8) 'rand' random initialization
 
-    % Default parameters
+    % Initial checks and default parameters
     if nargin<2
         error('Not enough input arguments: missing matrix and/or desired rank.')
     end
@@ -72,7 +72,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 
     if nargin==2
         opts=struct('method','Manopt','init','all','maxit',1e6,...
-            'maxtime',10,'tol',0.5*1e-30,'tau',1.5,'Hblock',1,'Wblock',1);
+            'maxtime',10,'tol',1e-15,'tau',1.5,'Iter_W',1,'Iter_H',1);
         opts.momentum=[0.75,1,1.05,1.01,1.5];
     else 
         % nargin==3
@@ -89,15 +89,15 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             opts.maxtime=10;
         end
         if ~isfield(opts,'tol')
-            opts.tol=0.5*1e-30;
+            opts.tol=1e-15;
         end
         if ~isfield(opts,'tau')
             opts.tau=1.5;
         end
-        if ~isfield(opts,'Wblock')
+        if ~isfield(opts,'Iter_W')
             opts.Wblock=1;
         end
-        if ~isfield(opts,'Hblock')
+        if ~isfield(opts,'Iter_H')
             opts.Hblock=1;
         end
         if ~isfield(opts,'momentum')
@@ -134,7 +134,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             H2=H2/sqrt(normX);
         case 'rand'
             [m,n]=size(X);
-            rng(6)
+            rng(1)
             W1=rand(m,r);
             H1=rand(n,r);
             W2=rand(m,r);
@@ -151,13 +151,20 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     switch opts.method
         case 'manBCD'
             loop=@(W1,H1,W2,H2) loop_manBCD(X,W1,H1,W2,H2,opts);
+        case 'manBCDres'
+            loop=@(W1,H1,W2,H2) loop_manBCDres(X,W1,H1,W2,H2,opts);
+        case 'manBCDsparse'
+            loop=@(W1,H1,W2,H2) loop_manBCD_sparse(X,W1,H1,W2,H2,opts);
         case 'BCD'
-            opts.tol=sqrt(2*opts.tol);
             loop=@(W1,H1,W2,H2) loop_BCD(X,W1,H1,W2,H2,opts);
         case 'Manopt'
             loop=@(W1,H1,W2,H2) loop_Manopt(X,W1,H1,W2,H2,opts);
-        case 'manBCDsparse'
-            loop=@(W1,H1,W2,H2) loop_manBCD_sparse(X,W1,H1,W2,H2,opts);
+        case 'proj'
+            loop=@(W1,H1,W2,H2) loop_proj(X,W1,H1,W2,H2,opts);
+        case 'projres'
+            loop=@(W1,H1,W2,H2) loop_projres(X,W1,H1,W2,H2,opts);
+        case 'proj-sparse'
+            loop=@(W1,H1,W2,H2) loop_proj_sparse(X,W1,H1,W2,H2,opts);
         otherwise
             error('Method not available')
     end
@@ -216,6 +223,5 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     H2=alpha*H2;
 
 end
-
 
 
