@@ -1,9 +1,9 @@
-function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
-%% loop_manBCD: Main cycle for HadDec - manBCD case
+function [W1,H1,W2,H2,info]=loop_proj(X,W1,H1,W2,H2,opts)
+%% loop_proj: Main cycle for HadDec - proj case
 % Performs Riemannian gradient block coordinate descent for Hadamard 
 % decomposition of X, with rank provided by the starting approximation 
-% X~=(W1*H1').*(W2*H2'). The iterations computed are directly updated onto
-% the manifold Bmr. See HadDec for more details.
+% X~=(W1*H1').*(W2*H2'). It implements alternative projections onto Bmr.
+% See HadDec for more details.
 
     % Initialization and parameters
     t_start=tic;
@@ -41,7 +41,7 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
             W1old=W1;
             W2old=W2;
             G=W*A-B;
-            [W1,W2]=Upd_manifold(W1,W2,G,alpha);
+            [W1,W2]=proj_Bmr(W-alpha*G);
             W=face_split(W1,W2);
         end
         W1=W1+beta*(W1-W1old);
@@ -61,7 +61,7 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
             H1old=H1;
             H2old=H2;
             G=H*C-D;
-            [H1,H2]=Upd_manifold(H1,H2,G,alpha);
+            [H1,H2]=proj_Bmr(H-alpha*G);
             H=face_split(H1,H2); 
         end
         H1=H1+beta*(H1-H1old);
@@ -86,6 +86,5 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
 
     % Output 
     info=struct('err',err(1:j),'time',time(1:j));
-
 
 end

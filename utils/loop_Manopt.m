@@ -1,7 +1,7 @@
 function [W1,H1,W2,H2,info]=loop_Manopt(X,W1,H1,W2,H2,opts)
 %% loop_Manopt: Main cycle for HadDec - Manopt case
 % Performs Riemannian gradient descent for Hadamard decomposition. See
-% HadDec_Manopt for more details.
+% HadDec for more details.
 
     % Initialization and parameters
     tstart=tic;
@@ -15,9 +15,9 @@ function [W1,H1,W2,H2,info]=loop_Manopt(X,W1,H1,W2,H2,opts)
     manifold=productmanifold(Mr);
     problem.M=manifold;
     options.verbosity=0;
-    options.tolcost=opts.tol;
+    options.tolcost=0.5*(opts.tol)^2;
     options.maxiter=Inf;
-    options.tolgradnorm=opts.tol;
+    options.tolgradnorm=0.5*(opts.tol)^2;
     init_time=toc(tstart);
     options.maxtime=opts.maxtime-init_time;
 

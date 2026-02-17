@@ -1,19 +1,16 @@
-function [Y1,Y2]=Upd_manifold(Y1,Y2,G,h)
+function [Z1,Z2]=Upd_manifold(Z1,Z2,G,h)
+%% Upd_manifold: update for manBCD method in HadDec
+% Updates the pair (Z1,Z2), which represents either (W1,W2) or (H1,H2).
+% It follows the gradient system showed in the paper.
 
-    [n,r]=size(Y1);
+    [m,r]=size(Z1);
     
-    for i=1:n
-        % Gi=reshape(G(i,:),r,r);
-        % Gixi=Gi*Y1(i,:)';
-        % Y1(i,:)=Y1(i,:)+h*(-Gi'*Y2(i,:)'+(Y2(i,:)*Gixi)*Y1(i,:)')';
-        % Y1(i,:)=Y1(i,:)/norm(Y1(i,:));
-        % Y2(i,:)=Y2(i,:)+h*(-Gixi)';
-
+    for i=1:m
         Gi=reshape(G(i,:),r,r);
-        Gixi=Gi*Y1(i,:)';
-        uiGixi=Y2(i,:)*Gixi;
-        Y1(i,:)=Y1(i,:)+h*(-Gi'*Y2(i,:)'+0.5*(uiGixi)*Y1(i,:)')';
-        Y2(i,:)=Y2(i,:)+h*(-Gixi+0.5*(uiGixi)*Y2(i,:)')';
+        Gixi=Gi*Z1(i,:)';
+        yiGixi=Z2(i,:)*Gixi;
+        Z1(i,:)=Z1(i,:)+h*(-Gi'*Z2(i,:)'+0.5*(yiGixi)*Z1(i,:)')';
+        Z2(i,:)=Z2(i,:)+h*(-Gixi+0.5*(yiGixi)*Z2(i,:)')';
     end
 
 end
