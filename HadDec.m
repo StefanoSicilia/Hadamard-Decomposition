@@ -24,11 +24,14 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       6) momentum - parameters for the extrapolation 
 %       [default [0.75,1,1.05,1.01,1.5]]
 %       7) tau (only for manBCDs) - parameter for gradient descent stepsize
-%       [default 1.5]
+%       [default 0.95]
 %       8) Iter_W (only for manBCDs) - number of iteration per each W block
 %       [default 1]
 %       9) Iter_H (only for manBCDs) - number of iteration per each H block
 %       [default 1]
+%       10) sparsity - flag to compute the error differently in the matrix   
+%       sparse case [default 0]
+%       11) noloops - flag for avoiding implementation loops [default 1]
 %
 % Outputs:
 %   the matrices W1,H1,W2 and H2 of the decomposition
@@ -38,16 +41,17 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       3) init - string about the initialization method performed
 %
 % The methods available are [default 'Manopt']:
-%   1) manBCD: it uses a 2 block coordinate descend algorithm for the
+%   1) Manopt: it uses a product manifold for X1=W1*H1' and X2=W2*H2' and 
+%   it optimizes through Manopt to find an approximation X~=X1.*X2.
+%   2) manBCD: it uses a 2 block coordinate descend algorithm for the
 %   rank-r^2 matrices W=face_split(W1,W2) and H=face_split(H1,H2) and it 
 %   optimizes on Bmr and Bnr respectively, where Bmr is the manifold of 
 %   matrices that admit a face-split decomposition.
-%   2) BCD:it uses the 4 block coordinate descent algorithm described in
+%   3) proj: alternative projections onto the manifold Bmr annd Bnr, using
+%   the representation X~=WH', with W in Bmr and H in Bnr.
+%   4) BCD:it uses the 4 block coordinate descent algorithm described in
 %   the paper by Wertz et al., with extrapolation (momentum) provided in 
 %   opts.momentum.
-%   3) Manopt: it uses a product manifold for X1=W1*H1' and X2=W2*H2' and 
-%   it optimizes through Manopt to find an approximation X~=X1.*X2.
-%   4) manBCDsparse: like manBCD, but for large sparse matrices.
 %
 % The initializations available are [default 'all'] :
 %   1) 'SVD-based' (see Init_SVDbased)
@@ -72,7 +76,8 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 
     if nargin==2
         opts=struct('method','Manopt','init','all','maxit',1e6,...
-            'maxtime',10,'tol',1e-15,'tau',1.5,'Iter_W',1,'Iter_H',1);
+            'maxtime',10,'tol',1e-15,'tau',0.95,'Iter_W',1,'Iter_H',1,...
+            'sparsity',0,'noloops',1);
         opts.momentum=[0.75,1,1.05,1.01,1.5];
     else 
         % nargin==3
@@ -100,6 +105,12 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         if ~isfield(opts,'Iter_H')
             opts.Hblock=1;
         end
+        if ~isfield(opts,'sparsity')
+            opts.sparsity=0;
+        end
+        if ~isfield(opts,'noloops')
+            opts.noloops=1;
+        end
         if ~isfield(opts,'momentum')
             opts.momentum=[0.75,1,1.05,1.01,1.5];
         end
@@ -113,18 +124,18 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     info_init=opts.init;
     switch info_init
         case 'all'
-            allinit=HadDec_all_init(X,r);
+            allinit=Init_all(X,r,opts.noloops,opts.sparsity);
             opts.maxtime=opts.maxtime/4;
         case 'best'
-            [W1,H1,W2,H2,info_init]=HadDec_init(X,r);
+            [W1,H1,W2,H2,info_init]=Init_best(X,r,opts.noloops);
         case 'SVD-based'
-            [W1,H1,W2,H2]=Init_SVDbased(X,r);
+            [W1,H1,W2,H2]=Init_SVDbased(X,r,opts.noloops);
         case 'FS'
-            [W1,H1,W2,H2]=Init_FS(X,r);
+            [W1,H1,W2,H2]=Init_FS(X,r,opts.noloops);
         case 'FSL'
-            [W1,H1,W2,H2]=Init_FSL(X,r);
+            [W1,H1,W2,H2]=Init_FSL(X,r,opts.noloops);
         case 'FSR'
-            [W1,H1,W2,H2]=Init_FSR(X,r);
+            [W1,H1,W2,H2]=Init_FSR(X,r,opts.noloops);
         case 'given'
             W1=opts.W1;
             H1=opts.H1;
@@ -139,37 +150,23 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             H1=rand(n,r);
             W2=rand(m,r);
             H2=rand(n,r);
-        case 'sparse'
-            allinit=HadDec_init_sparse(X,r);
-            opts.maxtime=opts.maxtime/4;
         otherwise
             error('Initialization method not available.')
     end
 
-
-    % Selection of the method: manBCD, BCD or Manopt
+    % Selection of the method: BCD, Manopt, manBCD or proj
     switch opts.method
-        case 'manBCD'
-            loop=@(W1,H1,W2,H2) loop_manBCD(X,W1,H1,W2,H2,opts);
-        case 'manBCDres'
-            loop=@(W1,H1,W2,H2) loop_manBCDres(X,W1,H1,W2,H2,opts);
-        case 'manBCDsparse'
-            loop=@(W1,H1,W2,H2) loop_manBCD_sparse(X,W1,H1,W2,H2,opts);
-        case 'BCD'
-            loop=@(W1,H1,W2,H2) loop_BCD(X,W1,H1,W2,H2,opts);
         case 'Manopt'
             loop=@(W1,H1,W2,H2) loop_Manopt(X,W1,H1,W2,H2,opts);
+        case 'manBCD'
+            loop=@(W1,H1,W2,H2) loop_manBCD(X,W1,H1,W2,H2,opts);
         case 'proj'
             loop=@(W1,H1,W2,H2) loop_proj(X,W1,H1,W2,H2,opts);
-        case 'projres'
-            loop=@(W1,H1,W2,H2) loop_projres(X,W1,H1,W2,H2,opts);
-        case 'proj-sparse'
-            loop=@(W1,H1,W2,H2) loop_proj_sparse(X,W1,H1,W2,H2,opts);
+        case 'BCD'
+            loop=@(W1,H1,W2,H2) loop_BCD(X,W1,H1,W2,H2,opts);
         otherwise
             error('Method not available')
     end
-
-    
 
     % Main computation
     if ~strcmp(opts.init,'all') && ~strcmp(opts.init,'sparse')
