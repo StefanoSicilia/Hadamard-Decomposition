@@ -8,19 +8,16 @@
     nrank=30;
       
     maxit=1e6;
-    tol=1e-30;
-    Hblock=1;
-    Wblock=1;
-    opts=struct('maxit',maxit,'init','all','tau',1.5,...
-        'Hblock',Hblock,'Wblock',Wblock,'tol',tol);
+    tol=1e-16;
+    Iter_W=2;
+    Iter_H=2;
+    opts=struct('maxit',maxit,'init','all','tau',0.95,...
+        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',0,'noloop',1);
     opts.momentum=[0.75,1,1.05,1.01,1.5];
-    %opts.momentum=[0,0,0,0,1]; % algorithms without extrapolation
     opts.maxtime=30;
     opts.method='Manopt';
     err=zeros(nsample,nrank);
     init=cell(nsample,nrank);    
-
-    % Note: total time required by HadDec is opts.maxtime*nsample*nrank 
 
     %% Apply the Manopt method
     for i=1:nsample
@@ -35,12 +32,12 @@
     end 
    
     %% Store and plot results
-    close all
     lw=1.3;
     err_mean=mean(err,1);
     err_std=std(err,1);
     color={'g',[0.75,0.5,0]};
     ranks=1:nrank;
+    figure
     semilogy(ranks, err_mean,'-o','Color',color{1},'LineWidth',lw);
     title('Mean of the errors')
     xlabel('Ranks')

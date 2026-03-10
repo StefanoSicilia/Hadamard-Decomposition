@@ -1,28 +1,45 @@
-%% HadDec on cameraman image
-% It takes almost 20 minutes.
-% The computational time is approximately given by 
-% n_methods*opts.maxtime
+%% Script to test HadDec
 
-    %% Methods, parameters and structures
-    m=225;
-    n=m;
-    r=15; 
-    X=double(imread('./datasets/cameraman.jpg'));
-    X=X(:,:,1);
+    %% Choice of the example type
+    m=4;
+    n=4;
+    r=floor(sqrt(min(m,n)));
+    eta=1e-4;
+    nmax=4;
+    example='random';
+    rng(1)
+    switch example
+        case 'random'
+            X=rand(m,n);
+        case 'randexact'
+            W1=randi(nmax,m,r);
+            H1=randi(nmax,n,r);
+            W2=randi(nmax,m,r);
+            H2=randi(nmax,n,r);
+            X=(W1*H1').*(W2*H2');
+        case 'randexactpert'
+            W1=randi(nmax,m,r);
+            H1=randi(nmax,n,r);
+            W2=randi(nmax,m,r);
+            H2=randi(nmax,n,r);
+            X=(W1*H1').*(W2*H2')+eta*randi(nmax,m,n);
+        otherwise
+            error('Example type not available.')
+    end
 
-   %% Methods parameters
+    %% Methods parameters
     maxit=1e6;
     tol=1e-16;
-    Iter_W=3;
-    Iter_H=3;
-    rng(1)
+    Iter_W=4;
+    Iter_H=4;
     opts=struct('maxit',maxit,'init','all','tau',0.95,...
-        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,'noloops',1);
+        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',0,'noloops',1);
     if strcmp(opts.init,'given')
         opts.W1=W1; opts.H1=H1; opts.W2=W2; opts.H2=H2;   
     end
     opts.momentum=[0.75,1,1.05,1.01,1.5];
-    opts.maxtime=2; %240;
+    %opts.momentum=[0,0,0,0,1]; % no extrapolation
+    opts.maxtime=3;
     methods={'Manopt','manBCD','proj','BCD','TSVD'};
     n_methods=length(methods)-1;
     W1=cell(n_methods,1);
@@ -62,7 +79,7 @@
     % Plot objective functions versus iteration 
     for k=1:n_methods
         semilogy(info{k}.err,plotsettings{k},'LineWidth',lw)
-        hold on 
+        hold on
     end
     f=relerr(end);
     maxl=1;
@@ -93,19 +110,3 @@
     semilogy([0,maxt],[f,f],'-.','Color',[0.75,0.5,0],'LineWidth',lw)
     hold on
     legend(methods,'Location','best')
-
-    %% Show the figures of the image approximations
-    normX=norm(X,'fro');
-    sq=255/normX;
-    for k=1:n_methods
-        figure
-        imshow(sq*(W1{k}*H1{k}').*(W2{k}*H2{k}'))
-        title(methods{k})
-    end
-    figure
-    imshow(sq*Ur2*Sr2*Vr2'*normX)
-    title(methods{end})
-    figure
-    imshow(sq*X)
-    title('original')
-

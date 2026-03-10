@@ -1,279 +1,120 @@
 %% Script to test some large datasets 
-% It takes ~3 hours
+% It takes ~6 hours
+% The computational time is approximately given by 
+% n_methods*opts.maxtime*nex
 
     %% Methods parameters and initializations
     maxit=1e6;
-    tol=1e-30;
-    Hblock=1;
-    Wblock=1;
-    opts=struct('maxit',maxit,'init','sparse','tau',1.5,...
-        'Hblock',Hblock,'Wblock',Wblock,'tol',tol,'method','manBCDsparse');
+    tol=1e-16;
+    Iter_W=2;
+    Iter_H=2;
+    opts=struct('maxit',maxit,'init','all','tau',0.95,...
+        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,'noloops',1);
     opts.momentum=[0.75,1,1.05,1.01,1.5];
-    %opts.momentum=[0,0,0,0,1]; % algorithms without extrapolation
-    opts.maxtime=800;
+    %opts.momentum=[0,0,0,0,1];
+    opts.maxtime=2; %800;
 
-    nex=14;
-    err=cell(nex,6);
-    info=cell(nex,1);
-    i=1;
-    legendlabel={};
+    methods={'manBCD','proj'};
+    n_methods=length(methods);
+    models={'NG20','classic','ohscal','k1b','hitech','reviews','sports',...
+        'la1','la12','la2','tr11','tr23','tr41','tr45'};
+    nex=length(models);
+    err=cell(nex,8);
+    errSVD=zeros(nex,1);
+    info=cell(nex,n_methods);
+    startex=9;
 
-    % Note: total time required by HadDec is nex*opts.maxtime
+    %% Dimensions of the datasets
+    % dims_m=[19949 7094 11162 2340 2301 4069 8580 3204 6279 3075 414 ...
+    %     204 878 690];
+    % dims_n=[43586 41681 11465 21839 10080 18483 14870 31472 31472 31472 ...
+    %     6429 5832 7454 8261];
 
-    %% NG20
-    fprintf('%i) NG20 ...',i)
-    m=19949;
-    n=43586;
-    r=20;
-    X=load("./datasets/NG20.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'NG20'];
-    i=i+1;
+    %% Main computations    
+    ranks=[20 4 10 6 6 5 7 6 6 6 9 6 10 10];
+    for i=startex:nex
+        fprintf('%i) %s ...',i,models{i})
+        r=ranks(i);
+        string=['./datasets/',models{i},'.mat'];
+        X=load(string).dtm;
+        [m,n]=size(X);
+        for j=1:n_methods
+            opts.method=methods{j};
+            [~,~,~,~,info{i,j}]=HadDec(X,r,opts);
+        end
+        r2=min([n,m,2*r]);
+        Xsvd=X/norm(X,'fro');
+        [U,S,V]=svds(Xsvd,r2);
+        errSVD(i)=norm(Xsvd-U*S*V','fro');
+        err(i,1:4)={m n r errSVD(i)};
+        k=5;
+        for j=1:n_methods
+            err(i,k:k+1)={info{i,j}.err(end) info{i,j}.init};
+            k=k+2;
+        end
+        fprintf(' done!\n')
+    end
 
-    %% classic
-    fprintf('%i) classic ...',i)
-    m=7094;
-    n=41681;
-    r=4;
-    X=load("./datasets/classic.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'classic'];
-    i=i+1;
-
-    %% ohscal
-    fprintf('%i) ohscal ...',i)
-    m=11162;
-    n=11465;
-    r=10;
-    X=load("./datasets/ohscal.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'ohscal'];
-    i=i+1;
-
-    %% k1b
-    fprintf('%i) k1b ...',i)
-    m=2340;
-    n=21839;
-    r=6;
-    X=load("./datasets/k1b.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'k1b'];
-    i=i+1;
-
-    %% Hitech
-    fprintf('%i) Hitech ...',i)
-    m=2301;
-    n=10080;
-    r=6;
-    X=load("./datasets/hitech.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'hitech'];
-    i=i+1;
-
-    %% Reviews
-    fprintf('%i) Reviews ...',i)
-    m=4069;
-    n=18483;
-    r=5;
-    X=load("./datasets/reviews.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'reviews'];
-    i=i+1;
-
-    %% Sports
-    fprintf('%i) Sports ...',i)
-    m=8580;
-    n=14870;
-    r=7;
-    X=load("./datasets/sports.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'sports'];
-    i=i+1;
-
-    %% la1
-    fprintf('%i) la1 ...',i) 
-    m=3204;
-    n=31472;
-    r=6;
-    X=load("./datasets/la1.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'la1'];
-    i=i+1;
-
-    %% la12
-    fprintf('%i) la12 ...',i)
-    m=6279;
-    n=31472;
-    r=6;
-    X=load("./datasets/la12.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'la12'];
-    i=i+1;
-
-    %% la2
-    fprintf('%i) la2 ...',i)
-    m=3075;
-    n=31472;
-    r=6;
-    X=load("./datasets/la2.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'la2'];
-    i=i+1;
-
-    %% tr11
-    fprintf('%i) tr11 ...',i)
-    m=414;
-    n=6429;
-    r=9;
-    X=load("./datasets/tr11.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'tr11'];
-    i=i+1;
-
-    %% tr23
-    fprintf('%i) tr23 ...',i)
-    m=204;
-    n=5832;
-    r=6;
-    X=load("./datasets/tr23.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'tr23'];
-    i=i+1;
-
-    %% tr41
-    fprintf('%i) tr41 ...',i)
-    m=878;
-    n=7454;
-    r=10;
-    X=load("./datasets/tr41.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'tr41'];
-    i=i+1;
-
-    %% tr45
-    fprintf('%i) tr45 ...',i)
-    m=690;
-    n=8261;
-    r=10;
-    X=load("./datasets/tr45.mat").dtm;
-    [~,~,~,~,info{i}]=HadDec(X,r,opts);
-    r2=min([n,m,2*r]);
-    Xsvd=X/norm(X,'fro');
-    [U,S,V]=svds(Xsvd,r2);
-    errSVD=norm(Xsvd-U*S*V','fro');
-    err(i,:)={m n r errSVD info{i}.err(end) info{i}.init};
-    fprintf(' done!\n')
-    legendlabel=[legendlabel,'tr45'];
 
     %% Plot results for the errors
     close all
-    figure(1)
     lw=1.3;
-    for i=1:nex
-        rng(10*i)
-        semilogy(info{i}.time,info{i}.err,'-','Color',[rand,rand,rand],...
-            'LineWidth',lw)
-        hold on
+    for j=1:n_methods
+        figure
+        for i=startex:nex
+            rng(10*i)
+            semilogy(info{i,j}.time,info{i,j}.err,'-',...
+                'Color',[rand,rand,rand],'LineWidth',lw)
+            hold on
+        end
+        title(methods{j})
+        legend(models{startex:nex},'Location','best');
     end
-    legend(legendlabel,'Location','best');
 
-    %% Ratio
-    ratio=zeros(nex,1);
-    for i=1:nex
-        ratio(i)=(info{i}.err(end-1)-info{i}.err(end))/info{i}.err(end);
+    %% Ratio and final errors
+    ratio=zeros(nex,n_methods);
+    relerr=zeros(nex,n_methods);
+    for i=startex:nex
+        for j=1:n_methods
+            ratio(i,j)=(info{i,j}.err(end-1)-info{i,j}.err(end))/info{i,j}.err(end);
+            relerr(i,j)=info{i,j}.err(end);
+        end
     end
+
+    %% Save
+    save('./results\err_largedata','err')
 
     %% SVD improvement
-    % Use the following lines for each dataset to found the rank for which
-    % SVD provides a lower relative error than HadDec.
+    % For each dataset, find the rank for which the rank-r TSVD provides a 
+    % lower relative error than the best HadDec (among manBCD and proj).
 
-    % X=load("./datasets/classic.mat").dtm;
-    % r2=23;
-    % Xsvd=X/norm(X,'fro');
-    % [U,S,V]=svds(Xsvd,r2);
-    % errSVD=norm(Xsvd-U*S*V','fro')
-
-    % Ranks found to improve HadDec relative error:
-    % [22 13 33 25 26 18 26 25 22 22 24 15 36 28]
-
-
-
+    hadbest=min(relerr,[],2);
+    rstar_vec=2*ranks;
+    for i=startex:nex
+        err_star=hadbest(i);
+        err_SVD=errSVD(i);
+        rstar=rstar_vec(i);
+        if err_star>err_SVD
+            % rank-2r TSVD is better than rank-r HD
+            while err_star>err_SVD
+                rstar=rstar-1;
+                string=['./datasets/',models{i},'.mat'];
+                X=load(string).dtm;
+                Xsvd=X/norm(X,'fro');
+                [U,S,V]=svds(Xsvd,rstar);
+                err_SVD=norm(Xsvd-U*S*V','fro');
+            end
+        else
+            % rank-2r TSVD is worse than rank-r HD
+            while err_star<err_SVD
+                rstar=rstar+1;
+                string=['./datasets/',models{i},'.mat'];
+                X=load(string).dtm;
+                Xsvd=X/norm(X,'fro');
+                [U,S,V]=svds(Xsvd,rstar);
+                err_SVD=norm(Xsvd-U*S*V','fro');
+            end
+        end
+        rstar_vec(i)=rstar;
+    end
 

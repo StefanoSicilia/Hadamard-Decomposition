@@ -1,35 +1,35 @@
 %% HadDec on dog colored image
-% It takes about 30 minutes
+% It takes a bit less than 1 hour.
+% The computational time is approximately given by 
+% 3*n_methods*opts.maxtime
 
     %% Methods, parameters and structures
-    m=399;
+    m=400;
     n=600;
     r=20;
     X=double(imread('./datasets/rgb_dog.jpg'));
-    X(m+1,:,:)=ones(1,n,3);
-    imageflag=1;
+    X(m,:,:)=X(m-1,:,:);
 
+    %% Methods parameters
     maxit=1e6;
-    tol=1e-15;
-    Hblock=1;
-    Wblock=1;
+    tol=1e-16;
+    Iter_W=3;
+    Iter_H=3;
     rng(1)
-    opts=struct('rank',r,'maxit',maxit,'init','all','tau',1.5,...
-        'Hblock',Hblock,'Wblock',Wblock,'tol',0.5*tol^2);   
+    opts=struct('maxit',maxit,'init','all','tau',0.95,...
+        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,'noloop',1); 
     opts.momentum=[0.75,1,1.05,1.01,1.5];
-    %opts.momentum=[0,0,0,0,1];
-    opts.maxtime=240; 
+    opts.maxtime=5; %240; 
     r2=min([m,n,2*r]);
-
-    % Note: total time required by HadDec is 9*opts.maxtime 
-
-    W1=cell(3,3);
-    W2=cell(3,3);
-    H1=cell(3,3);
-    H2=cell(3,3);
-    info=cell(3,3);
-    times=zeros(3);
-    fin_err=zeros(3,4);
+    methods={'Manopt','manBCD','proj','BCD','TSVD'};
+    n_methods=length(methods)-1;
+    W1=cell(3,n_methods);
+    W2=cell(3,n_methods);
+    H1=cell(3,n_methods);
+    H2=cell(3,n_methods);
+    times=zeros(3,n_methods+1);
+    relerr=zeros(3,n_methods+1);
+    info=cell(3,n_methods+1);
     normX=zeros(3,1);
     Xsvd=zeros(size(X));
 
@@ -40,98 +40,89 @@
     Sr2=cell(3,1);
     Vr2=cell(3,1);
 
-    opts_1=opts; opts_1.method='manBCD';
-    opts_2=opts; opts_2.method='BCD';
-    opts_3=opts; opts_3.method='Manopt';
-
+    %% Rank-r HDs and TSVD of rank 2r of each slice of the image
     for k=1:3
-
-        % manBCD
-        j=1;
-        [W1{k,j},H1{k,j},W2{k,j},H2{k,j},info{k,j}]=HadDec(X(:,:,k),r,opts_1);
-        fin_err(k,j)=info{k,j}.err(end);
-
-        % BCD
-        j=2;
-        [W1{k,j},H1{k,j},W2{k,j},H2{k,j},info{k,j}]=HadDec(X(:,:,k),r,opts_2);
-        fin_err(k,j)=info{k,j}.err(end);
-
-        % Manopt
-        j=3;
-        [W1{k,j},H1{k,j},W2{k,j},H2{k,j},info{k,j}]=HadDec(X(:,:,k),r,opts_3);
-        fin_err(k,j)=info{k,j}.err(end);
         
-        % SVD
-        j=4;
+        for j=1:n_methods
+            opts.method=methods{j};
+            tic;
+            [W1{k,j},H1{k,j},W2{k,j},H2{k,j},info{k,j}]=HadDec(X(:,:,k),r,opts);
+            times(k,j)=toc;
+            relerr(k,j)=info{k,j}.err(end);
+        end
+        
         normX(k)=norm(X(:,:,k),'fro');
         Xsvd(:,:,k)=X(:,:,k)/normX(k);
         [U{k},S{k},V{k}]=svd(Xsvd(:,:,k));
         Sr2{k}=S{k}(1:r2,1:r2);
         Ur2{k}=U{k}(:,1:r2);
         Vr2{k}=V{k}(:,1:r2);
-        fin_err(k,j)=norm(Xsvd(:,:,k)-Ur2{k}*Sr2{k}*Vr2{k}','fro');
+        relerr(k,end)=norm(Xsvd(:,:,k)-Ur2{k}*Sr2{k}*Vr2{k}','fro');
 
     end
 
+
     %% Display the relative errors
     close all
-    countfig=0;
     lw=1.3;   
-    legendlabel={'manBCD','BCD','Manopt','2r-SVD'};
-    colorlabel={'r','b','g',[0.75,0.5,0]};
+    plotsettings={'m-','r-','b-','k-'};
     for k=1:3
-        countfig=countfig+1;
-        figure(countfig)
-        for j=1:3
-            semilogy(info{k,j}.time,info{k,j}.err,'-','LineWidth',lw,...
-                'Color',colorlabel{j})
-            hold on
+        figure
+        legendlabel={};
+        for j=1:n_methods
+            if relerr(k)<1e5
+                semilogy(info{k,j}.time,info{k,j}.err,plotsettings{j},'LineWidth',lw)
+                hold on
+                legendlabel=[legendlabel,methods{j}];
+            end
         end
-        f=fin_err(k,4);
-        Mtime=max([info{k,1}.time(end),info{k,2}.time(end),info{k,3}.time(end)]);
-        semilogy([0,Mtime],[f,f],'-.','Color',[0.75,0.5,0],'LineWidth',lw)
+        xlabel('Time (s)')
+        ylabel('Objective function')
+        title(['Slice ',num2str(k)])
+        f=relerr(end);
+        if f<1e5
+            maxt=0;
+            for j=1:n_methods
+                time_method=info{k,j}.time(end);
+                if time_method>maxt
+                    maxt=time_method;
+                end
+            end
+            semilogy([0,maxt],[f,f],'-.','Color',[0.75,0.5,0],'LineWidth',lw)
+            hold on
+            legendlabel=[legendlabel,'TSVD'];
+        end
         legend(legendlabel,'Location','best')
     end
 
     %% Plot the image compressions
     sq=255;
-    A=cell(4);
-    title_label={'manBCD','BCD','Manopt','2r-SVD'};
-    for j=1:3
-        countfig=countfig+1;
-        figure(countfig)
+    A=cell(n_methods+1);
+    for j=1:n_methods
+        figure
         for k=1:3
             A{j}(:,:,k)=((W1{k,j}*H1{k,j}').*(W2{k,j}*H2{k,j}'))/normX(k);
         end
         imshow(sq*A{j})
-        title(title_label{j})
+        title(methods{j})
     end
-    j=4;
-    countfig=countfig+1;
-    figure(countfig)
+
+    figure
     for k=1:3
-        A{j}(:,:,k)=(Ur2{k}*Sr2{k}*Vr2{k}');
+        A{end}(:,:,k)=(Ur2{k}*Sr2{k}*Vr2{k}');
     end
-    imshow(sq*A{j})
-    title(title_label{j})
-    countfig=countfig+1;
-    figure(countfig)
+    imshow(sq*A{end})
+    title(methods{end})
+    figure
     imshow(sq*Xsvd)
     title('original')
 
-    %% Slices relative errors
-    for i=1:3
-        figure(i)
-        xlabel('Time (s)')
-        ylabel('Objective function')
-        title(['Slice ',num2str(i)])
-    end
 
     %% Initializations chosen and number of iterations
-    Inits=cell(3,3);
-    Iters=zeros(3,3);
+    Inits=cell(3,n_methods);
+    Iters=zeros(3,n_methods);
     for k=1:3
-        for j=1:3
+        for j=1:4
             Inits{k,j}=info{k,j}.init;
             Iters(k,j)=length(info{k,j}.err);
         end

@@ -1,68 +1,85 @@
 %% Script to test HadDec on synthetic data - low-rank
-% It takes a bit more than 3 hours
+% It takes 5 hours.
+% The computational time is approximately given by 
+% n_methods*opts.maxtime*nsample*nrank
 
     %% Methods, parameters and structures
     m=100; 
     n=m;
-    nsample=10; 
-    nrank=floor(sqrt(min([m,n]))); 
-
+    n_sample=10; 
+    nrank=floor(sqrt(min([m,n])))-1;    
+    
     maxit=1e6;
-    tol=1e-30;
-    Hblock=1;
-    Wblock=1;
-    opts=struct('maxit',maxit,'init','all','tau',1.5,...
-        'Hblock',Hblock,'Wblock',Wblock,'tol',tol);
+    tol=1e-16;
+    Iter_W=2;
+    Iter_H=2;
+    opts=struct('maxit',maxit,'init','all','tau',0.95,...
+        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',0,'noloop',1);
     opts.momentum=[0.75,1,1.05,1.01,1.5];
-    %opts.momentum=[0,0,0,0,1]; % algorithms without extrapolation
     opts.maxtime=40; 
-    opts_1=opts; opts_1.method='manBCD';
-    opts_2=opts; opts_2.method='BCD';
-    opts_3=opts; opts_3.method='Manopt';
-    err=zeros(nsample,nrank,4);
+    methods={'Manopt','manBCD','proj','BCD','TSVD'};
+    n_methods=length(methods)-1;
+    W1=cell(n_sample,nrank,n_methods);
+    W2=cell(n_sample,nrank,n_methods);
+    H1=cell(n_sample,nrank,n_methods);
+    H2=cell(n_sample,nrank,n_methods);
+    times=zeros(n_sample,nrank,n_methods);
+    relerr=zeros(n_sample,nrank,n_methods+1);
+    info=cell(n_sample,nrank,n_methods+1);
 
-    % Note: total time required by HadDec is 3*opts.maxtime*nsample*nrank
+    X=zeros(m,n,n_sample);
+    normX=zeros(n_sample,1);
+    Xsvd=zeros(m,n,n_sample);
+    U=cell(n_sample,nrank);
+    S=cell(n_sample,nrank);
+    V=cell(n_sample,nrank);
+    Ur2=cell(n_sample,nrank);
+    Sr2=cell(n_sample,nrank);
+    Vr2=cell(n_sample,nrank);
 
-    %% Apply the methods: manBCD (1), BCD (2), Manopt (3), rank-2r SVD (4)
-    for i=1:nsample
+    %% Apply the methods 
+    for i=1:n_sample
         rng(i)
-        for j=1:nrank
-            r2=2*j;
-            X=rand(m,r2)*rand(r2,n);
-            % 1) manBCD
-            [~,~,~,~,info_man]=HadDec(X,j,opts_1);
-            err(i,j,1)=info_man.err(end);
-            % 2) BCD
-            opts.method='BCD';
-            [~,~,~,~,info_BCD]=HadDec(X,j,opts_2);
-            err(i,j,2)=info_BCD.err(end);
-            % 3) Manopt
-            [~,~,~,~,info_Manopt]=HadDec(X,j,opts_3);
-            err(i,j,3)=info_Manopt.err(end);
-            % 4) rank-2r SVD
-            Xsvd=X/norm(X,'fro');
-            [U,S,V]=svd(Xsvd);
-            Sr2=S(1:r2,1:r2);
-            Ur2=U(:,1:r2);
-            Vr2=V(:,1:r2);
-            err(i,j,4)=norm(Xsvd-Ur2*Sr2*Vr2','fro');
+        for r=1:nrank
+            r2=2*(r+1);
+            X(:,:,i)=rand(m,r2)*rand(r2,n);
+
+            % TSVD
+            normX(i)=norm(X(:,:,i),'fro');
+            Xsvd(:,:,i)=X(:,:,i)/normX(i);
+            [U{i},S{i},V{i}]=svd(Xsvd(:,:,i));
+            Sr2{i,r}=S{i}(1:r2,1:r2);
+            Ur2{i,r}=U{i}(:,1:r2);
+            Vr2{i,r}=V{i}(:,1:r2);
+            relerr(i,r,end)=norm(Xsvd(:,:,i)-Ur2{i,r}*Sr2{i,r}*Vr2{i,r}','fro');
+    
+            % HD
+            for j=1:n_methods
+                opts.method=methods{j};
+                tic;
+                [W1{i,r,j},H1{i,r,j},W2{i,r,j},H2{i,r,j},info{i,r,j}]=...
+                HadDec(X(:,:,i),r+1,opts);
+                times(i,r,j)=toc;
+                relerr(i,r,j)=info{i,r,j}.err(end);
+            end
         end
     end 
+
    
     %% Store and plot results
-    close all
+    figure
     lw=1.3;
-    err_mean=mean(err,1);
-    err_std=std(err,1);
-    color={'r','b','g',[0.75,0.5,0]};
-    ranks=1:nrank;
-    for k=1:4
+    err_mean=mean(relerr,1);
+    err_std=std(relerr,1);
+    plotsettings={'magenta','red','blue','black',[0.75,0.5,0]};
+    ranks=2:nrank+1;
+    for j=1:n_methods+1
         hold on;
-        semilogy(ranks, err_mean(:,:,k),'-o','Color',color{k},'LineWidth',lw);
+        semilogy(ranks, err_mean(:,:,j),'-o','Color',plotsettings{j},'LineWidth',lw);
     end
     title('Mean of the errors')
     xlabel('Ranks')
-    legendlabel={'manBCD','BCD','Manopt','SVD'};
+    legendlabel=methods;
     legend(legendlabel,'Location','best')
 
 
