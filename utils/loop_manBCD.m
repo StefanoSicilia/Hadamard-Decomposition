@@ -11,7 +11,7 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
     tol=opts.tol;
     extrapar=opts.momentum;
     beta=extrapar(1); betat=extrapar(2); gamma=extrapar(3); 
-    gammat=extrapar(4); eta=extrapar(5); betaold=beta;
+    gammat=extrapar(4); eta=extrapar(5); kappa=extrapar(6); betaold=beta;
     tau=opts.tau;
     Iter_W=opts.Iter_W;
     Iter_H=opts.Iter_H;
@@ -21,7 +21,7 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
     time(j)=init_time;
     maxtime=opts.maxtime-init_time;
     sparseflag=opts.sparsity;
-    opts2=opts; opts2.maxit=5;
+    extrapolflag=0;
 
     % Relative error function for unit Frobenius norm X
     err=zeros(maxit,1);
@@ -47,7 +47,6 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
     W2y=W2;
     H1y=H1;
     H2y=H2;
-    extrapolflag=0;
 
     % Main cycle
     if sparseflag
@@ -107,14 +106,14 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
             if err(j)<err(j-1)
                 betaold=beta;
                 beta=min(betat,gamma*beta);
-                betat=min(1,gammat*betat);
+                betat=min(kappa^extrapolflag,gammat*betat);
                 W1=W1n; W2=W2n; H1=H1n; H2=H2n;
             else
                 err(j)=err(j-1);
                 betat=betaold;
                 beta=beta/eta;
                 extrapolflag=extrapolflag+1;
-                if extrapolflag>10
+                if extrapolflag>10000
                     beta=0;
                 end
                 W1y=W1; W2y=W2; H1y=H1; H2y=H2;
@@ -174,14 +173,14 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
             if err(j)<err(j-1)
                 betaold=beta;
                 beta=min(betat,gamma*beta);
-                betat=min(1,gammat*betat);
+                betat=min(kappa^extrapolflag,gammat*betat);
                 W1=W1n; W2=W2n; H1=H1n; H2=H2n;
             else
                 err(j)=err(j-1);
                 betat=betaold;
                 beta=beta/eta;
                 extrapolflag=extrapolflag+1;
-                if extrapolflag>10
+                if extrapolflag>10000
                     beta=0;
                 end
                 W1y=W1; W2y=W2; H1y=H1; H2y=H2;
