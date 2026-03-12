@@ -21,17 +21,19 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       not include the error computation, since it might be removed)
 %       [default 10 seconds]
 %       5) tol - tolerance on the objective function [default 1e-16]
-%       6) momentum - parameters for the extrapolation 
-%       [default [0.75,1,1.05,1.01,1.5]]
-%       7) tau (only for manBCDs) - parameter for gradient descent stepsize
-%       [default 0.95]
-%       8) Iter_W (only for manBCDs) - number of iteration per each W block
-%       [default 1]
-%       9) Iter_H (only for manBCDs) - number of iteration per each H block
-%       [default 1]
+%       6) momentum (not for Manopt) - parameters for the extrapolation 
+%       [default [0.75,1,1.05,1.01,1.5,0.6]]
+%       7) tau (only for manBCD and proj) - parameter for gradient descent 
+%       stepsize [default 0.95]
+%       8) Iter_W (only for manBCD and proj) - number of iterations per 
+%       each W block [default 1]
+%       9) Iter_H (only for manBCD and proj) - number of iterations per 
+%       each H block [default 1]
 %       10) sparsity - flag to compute the error differently in the matrix   
 %       sparse case [default 0]
 %       11) noloops - flag for avoiding implementation loops [default 1]
+%       12) theta - parameter for the perturbation of the zero rows in the
+%       initial matrices [default 1e-4]
 %
 % Outputs:
 %   the matrices W1,H1,W2 and H2 of the decomposition
@@ -78,7 +80,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         opts=struct('method','Manopt','init','all','maxit',1e6,...
             'maxtime',10,'tol',1e-15,'tau',0.95,'Iter_W',1,'Iter_H',1,...
             'sparsity',0,'noloops',1);
-        opts.momentum=[0.75,1,1.05,1.01,1.5];
+        opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
     else 
         % nargin==3
         if ~isfield(opts,'method')
@@ -99,6 +101,9 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         if ~isfield(opts,'tau')
             opts.tau=1.5;
         end
+        if ~isfield(opts,'theta')
+            opts.theta=1e-4;
+        end
         if ~isfield(opts,'Iter_W')
             opts.Wblock=1;
         end
@@ -112,7 +117,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             opts.noloops=1;
         end
         if ~isfield(opts,'momentum')
-            opts.momentum=[0.75,1,1.05,1.01,1.5];
+            opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
         end
     end
 
@@ -124,7 +129,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     info_init=opts.init;
     switch info_init
         case 'all'
-            allinit=Init_all(X,r,opts.noloops,opts.sparsity);
+            WH=Init_all(X,r,opts.noloops,opts.sparsity);
             opts.maxtime=opts.maxtime/4;
         case 'best'
             [W1,H1,W2,H2,info_init]=Init_best(X,r,opts.noloops);
@@ -144,8 +149,8 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             W1=W1/sqrt(normX);
             H2=H2/sqrt(normX);
         case 'rand'
-            [m,n]=size(X);
             rng(1)
+            [m,n]=size(X);
             W1=rand(m,r);
             H1=rand(n,r);
             W2=rand(m,r);
@@ -169,32 +174,26 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     end
 
     % Main computation
+    theta=opts.theta;
     if ~strcmp(opts.init,'all') && ~strcmp(opts.init,'sparse')
-        % Single inizialization 
+        % Single initialization 
+        [W1,H1,W2,H2]=zero_rows_pert(W1,H1,W2,H2,theta);
         [W1,H1,W2,H2,info]=loop(W1,H1,W2,H2);
         info.init=info_init;
     else
         % Multiple initialization
-        W1=allinit.W1_svd;
-        W2=allinit.W2_svd;
-        H1=allinit.H1_svd;
-        H2=allinit.H2_svd;
+        [W1,H1,W2,H2]=zero_rows_pert(WH.W1_svd,WH.H1_svd,WH.W2_svd,WH.H2_svd,theta);
         [W1_svd,H1_svd,W2_svd,H2_svd,info_svd]=loop(W1,H1,W2,H2);
-        W1=allinit.W1_FS;
-        W2=allinit.W2_FS;
-        H1=allinit.H1_FS;
-        H2=allinit.H2_FS;
+        
+        [W1,H1,W2,H2]=zero_rows_pert(WH.W1_FS,WH.H1_FS,WH.W2_FS,WH.H2_FS,theta);
         [W1_FS,H1_FS,W2_FS,H2_FS,info_FS]=loop(W1,H1,W2,H2);
-        W1=allinit.W1_FSL;
-        W2=allinit.W2_FSL;
-        H1=allinit.H1_FSL;
-        H2=allinit.H2_FSL;
+        
+        [W1,H1,W2,H2]=zero_rows_pert(WH.W1_FSL,WH.H1_FSL,WH.W2_FSL,WH.H2_FSL,theta);
         [W1_FSL,H1_FSL,W2_FSL,H2_FSL,info_FSL]=loop(W1,H1,W2,H2);
-        W1=allinit.W1_FSR;
-        W2=allinit.W2_FSR;
-        H1=allinit.H1_FSR;
-        H2=allinit.H2_FSR;
+
+        [W1,H1,W2,H2]=zero_rows_pert(WH.W1_FSR,WH.H1_FSR,WH.W2_FSR,WH.H2_FSR,theta);
         [W1_FSR,H1_FSR,W2_FSR,H2_FSR,info_FSR]=loop(W1,H1,W2,H2);
+
         err_vec=[info_svd.err(end),info_FS.err(end),...
             info_FSL.err(end),info_FSR.err(end)];
         method={'svd','FS','FSL','FSR'};
