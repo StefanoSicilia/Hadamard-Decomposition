@@ -1,4 +1,4 @@
-Given a matrix $X \in \mathbb{R}^{m \times n}$ and a rank $r \ll \min\{m,n\} $, the Hadamard Decomosition problem aims to solve 
+Given a matrix $X \in \mathbb{R}^{m \times n}$ and a rank $r \ll \min(m,n) $, the Hadamard Decomosition problem aims to solve 
 
 $$\min_{W_1,H_1,W_2,H_2} \|X - (W_1H_1^\top) \circ (W_2H_2^\top)\|_F^2=\min_{W_1,H_1,W_2,H_2} \|X - (W_1\textbullet W_2)(H_1\textbullet H_2)^\top\|_F^2,$$
 
