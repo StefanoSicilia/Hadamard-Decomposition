@@ -16,12 +16,12 @@
     Iter_W=3;
     Iter_H=3;
     rng(1)
-    opts=struct('maxit',maxit,'init','all','tau',0.95,...
+    opts=struct('maxit',maxit,'init','all','tau',0.95,'theta',1e-4,...
         'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,'noloop',1); 
-    opts.momentum=[0.75,1,1.05,1.01,1.5];
-    opts.maxtime=5; %240; 
+    opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
+    opts.maxtime=240; 
     r2=min([m,n,2*r]);
-    methods={'Manopt','manBCD','proj','BCD','TSVD'};
+    methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
     n_methods=length(methods)-1;
     W1=cell(3,n_methods);
     W2=cell(3,n_methods);
@@ -68,31 +68,24 @@
     plotsettings={'m-','r-','b-','k-'};
     for k=1:3
         figure
-        legendlabel={};
         for j=1:n_methods
-            if relerr(k)<1e5
-                semilogy(info{k,j}.time,info{k,j}.err,plotsettings{j},'LineWidth',lw)
-                hold on
-                legendlabel=[legendlabel,methods{j}];
-            end
+            semilogy(info{k,j}.time,info{k,j}.err,plotsettings{j},'LineWidth',lw)
+            hold on
         end
         xlabel('Time (s)')
         ylabel('Objective function')
         title(['Slice ',num2str(k)])
         f=relerr(end);
-        if f<1e5
-            maxt=0;
-            for j=1:n_methods
-                time_method=info{k,j}.time(end);
-                if time_method>maxt
-                    maxt=time_method;
-                end
+        maxt=0;
+        for j=1:n_methods
+            time_method=info{k,j}.time(end);
+            if time_method>maxt
+                maxt=time_method;
             end
-            semilogy([0,maxt],[f,f],'-.','Color',[0.75,0.5,0],'LineWidth',lw)
-            hold on
-            legendlabel=[legendlabel,'TSVD'];
         end
-        legend(legendlabel,'Location','best')
+        semilogy([0,maxt],[f,f],'-.','Color',[0.75,0.5,0],'LineWidth',lw)
+        hold on
+        legend(methods,'Location','best')
     end
 
     %% Plot the image compressions
@@ -122,7 +115,7 @@
     Inits=cell(3,n_methods);
     Iters=zeros(3,n_methods);
     for k=1:3
-        for j=1:4
+        for j=1:n_methods
             Inits{k,j}=info{k,j}.init;
             Iters(k,j)=length(info{k,j}.err);
         end

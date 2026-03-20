@@ -1,5 +1,5 @@
 %% Script to test some large datasets 
-% It takes ~6 hours
+% It takes almost 7 hours
 % The computational time is approximately given by 
 % n_methods*opts.maxtime*nex
 
@@ -8,21 +8,25 @@
     tol=1e-16;
     Iter_W=2;
     Iter_H=2;
-    opts=struct('maxit',maxit,'init','all','tau',0.95,...
+    opts=struct('maxit',maxit,'init','all','tau',0.95,'theta',1e-4,...
         'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,'noloops',1);
-    opts.momentum=[0.75,1,1.05,1.01,1.5];
-    %opts.momentum=[0,0,0,0,1];
-    opts.maxtime=2; %800;
+    opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
+    opts.maxtime=800;
 
-    methods={'manBCD','proj'};
+    methods={'manBCD','projBCD'};
     n_methods=length(methods);
     models={'NG20','classic','ohscal','k1b','hitech','reviews','sports',...
         'la1','la12','la2','tr11','tr23','tr41','tr45'};
     nex=length(models);
+    W1=cell(nex,n_methods);
+    H1=cell(nex,n_methods);
+    W2=cell(nex,n_methods);
+    H2=cell(nex,n_methods);
     err=cell(nex,8);
     errSVD=zeros(nex,1);
+    relerr=zeros(nex,n_methods);
     info=cell(nex,n_methods);
-    startex=9;
+    startex=1;
 
     %% Dimensions of the datasets
     % dims_m=[19949 7094 11162 2340 2301 4069 8580 3204 6279 3075 414 ...
@@ -30,7 +34,8 @@
     % dims_n=[43586 41681 11465 21839 10080 18483 14870 31472 31472 31472 ...
     %     6429 5832 7454 8261];
 
-    %% Main computations    
+    %% Main computations
+    tic
     ranks=[20 4 10 6 6 5 7 6 6 6 9 6 10 10];
     for i=startex:nex
         fprintf('%i) %s ...',i,models{i})
@@ -40,7 +45,8 @@
         [m,n]=size(X);
         for j=1:n_methods
             opts.method=methods{j};
-            [~,~,~,~,info{i,j}]=HadDec(X,r,opts);
+            [W1{i,j},H1{i,j},W2{i,j},H2{i,j},info{i,j}]=HadDec(X,r,opts);
+            relerr(i,j)=info{i,j}.err(end);
         end
         r2=min([n,m,2*r]);
         Xsvd=X/norm(X,'fro');
@@ -54,6 +60,7 @@
         end
         fprintf(' done!\n')
     end
+    time_largedata=toc;
 
 
     %% Plot results for the errors
@@ -71,25 +78,13 @@
         legend(models{startex:nex},'Location','best');
     end
 
-    %% Ratio and final errors
-    ratio=zeros(nex,n_methods);
-    relerr=zeros(nex,n_methods);
-    for i=startex:nex
-        for j=1:n_methods
-            ratio(i,j)=(info{i,j}.err(end-1)-info{i,j}.err(end))/info{i,j}.err(end);
-            relerr(i,j)=info{i,j}.err(end);
-        end
-    end
-
-    %% Save
-    save('./results\err_largedata','err')
-
     %% SVD improvement
     % For each dataset, find the rank for which the rank-r TSVD provides a 
     % lower relative error than the best HadDec (among manBCD and proj).
 
     hadbest=min(relerr,[],2);
     rstar_vec=2*ranks;
+    ratio=zeros(nex,1);
     for i=startex:nex
         err_star=hadbest(i);
         err_SVD=errSVD(i);
@@ -116,5 +111,10 @@
             end
         end
         rstar_vec(i)=rstar;
+        ratio(i)=(rstar-2*ranks(i))/(2*ranks(i));
     end
 
+    %% Savings
+    save('./results\err_largedata','err')
+    save('./results\rstar_largedata','rstar_vec')
+    save('./results\ratio_largedata','ratio')
