@@ -12,7 +12,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %
 % Inputs:
 %   X: m-by-n matrix to be decomposed
-%   r: a postive integer for the rank-r Hadamard Decomposition
+%   r: an integer greater than 1 for the rank-r Hadamard Decomposition
 %   opts: struct with fields
 %       1) method - the method chosen (see below) [default 'Manopt']
 %       2) init - initialization method (see below) [default 'all']
@@ -23,11 +23,11 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       5) tol - tolerance on the objective function [default 1e-16]
 %       6) momentum (not for Manopt) - parameters for the extrapolation 
 %       [default [0.75,1,1.05,1.01,1.5,0.6]]
-%       7) tau (only for manBCD and proj) - parameter for gradient descent 
-%       stepsize [default 0.95]
-%       8) Iter_W (only for manBCD and proj) - number of iterations per 
+%       7) tau (only for manBCD and projBCD) - parameter for gradient 
+%       descent stepsize [default 0.95]
+%       8) Iter_W (only for manBCD and projBCD) - number of iterations per 
 %       each W block [default 1]
-%       9) Iter_H (only for manBCD and proj) - number of iterations per 
+%       9) Iter_H (only for manBCD and projBCD) - number of iterations per 
 %       each H block [default 1]
 %       10) sparsity - flag to compute the error differently in the matrix   
 %       sparse case [default 0]
@@ -49,7 +49,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %   rank-r^2 matrices W=face_split(W1,W2) and H=face_split(H1,H2) and it 
 %   optimizes on Bmr and Bnr respectively, where Bmr is the manifold of 
 %   matrices that admit a face-split decomposition.
-%   3) proj: alternative projections onto the manifold Bmr annd Bnr, using
+%   3) projBCD: alternative projections onto the manifold Bmr annd Bnr, using
 %   the representation X~=WH', with W in Bmr and H in Bnr.
 %   4) BCD:it uses the 4 block coordinate descent algorithm described in
 %   the paper by Wertz et al., with extrapolation (momentum) provided in 
@@ -165,8 +165,8 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             loop=@(W1,H1,W2,H2) loop_Manopt(X,W1,H1,W2,H2,opts);
         case 'manBCD'
             loop=@(W1,H1,W2,H2) loop_manBCD(X,W1,H1,W2,H2,opts);
-        case 'proj'
-            loop=@(W1,H1,W2,H2) loop_proj(X,W1,H1,W2,H2,opts);
+        case 'projBCD'
+            loop=@(W1,H1,W2,H2) loop_projBCD(X,W1,H1,W2,H2,opts);
         case 'BCD'
             loop=@(W1,H1,W2,H2) loop_BCD(X,W1,H1,W2,H2,opts);
         otherwise
