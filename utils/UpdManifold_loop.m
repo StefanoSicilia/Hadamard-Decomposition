@@ -17,8 +17,14 @@ function [Z1,Z2]=UpdManifold_loop(Z1,Z2,G,h)
         Gi=reshape(G(i,:),r,r);
         Gixi=Gi*X(i,:)';
         yiGixi=Y(i,:)*Gixi;
-        X(i,:)=X(i,:)+h/rho(i)*(-Gi'*Y(i,:)'+0.5*(yiGixi)*X(i,:)')';
-        Y(i,:)=Y(i,:)+h/rho(i)*(-Gixi+0.5*(yiGixi)*Y(i,:)')';
+        sta=rho(i)/yiGixi;
+        h=min(h,0.95*sta).*(sta>0)+h.*(sta<=0);
+        updater=sqrt(1-h/sta);
+        rho1(i)=rho1(i).*updater;
+        rho2(i)=rho2(i).*updater;
+        scale=h/(rho1(i)*rho2(i));
+        X(i,:)=X(i,:)+scale*(-Gi'*Y(i,:)'+yiGixi*X(i,:)')';
+        Y(i,:)=Y(i,:)+scale*(-Gixi+yiGixi*Y(i,:)')';
     end
     Z1=X.*rho1;
     Z2=Y.*rho2;

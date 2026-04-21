@@ -4,6 +4,7 @@ function [Z1,Z2]=UpdManifold_noloop(Z1,Z2,G,h)
 % It follows the gradient system showed in the paper.
 % Same as UpdManifold_loop, but it uses Matlab reshapings to avoid the loop.
 
+
     r=size(Z1,2);
     rho1=vecnorm(Z1,2,2);
     rho2=vecnorm(Z2,2,2);
@@ -19,10 +20,15 @@ function [Z1,Z2]=UpdManifold_noloop(Z1,Z2,G,h)
         Yp=permute(Y(idx,:),[2 3 1]);
         Gixi=pagemtimes(G3,Xp);
         yiGixi=pagemtimes(permute(Yp,[2 1 3]),Gixi);
-        GitY=pagemtimes(permute(G3,[2 1 3]),Yp);
-        scale=reshape(h./rho(idx),1,1,[]);
-        X(idx,:)=permute(Xp+scale.*(-GitY+0.5*Xp.*yiGixi),[3 1 2]);
-        Y(idx,:)=permute(Yp+scale.*(-Gixi+0.5*Yp.*yiGixi),[3 1 2]);
+        GitY=pagemtimes(permute(G3,[2 1 3]),Yp); 
+        sta=rho(idx)./reshape(yiGixi,[],1);
+        h=min(h,0.95*sta).*(sta>0)+h.*(sta<=0);
+        updater=sqrt(1-h./sta);
+        rho1(idx)=rho1(idx).*updater;
+        rho2(idx)=rho2(idx).*updater;
+        scale=reshape(h./(rho1(idx).*rho2(idx)),1,1,[]);
+        X(idx,:)=permute(Xp+scale.*(-GitY+Xp.*yiGixi),[3 1 2]);
+        Y(idx,:)=permute(Yp+scale.*(-Gixi+Yp.*yiGixi),[3 1 2]);
     end
     Z1=X.*rho1;
     Z2=Y.*rho2;
