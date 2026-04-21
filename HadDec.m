@@ -41,6 +41,10 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       1) err - vector with the relative errors (objective function)
 %       2) times - vector with the time required by each iteration
 %       3) init - string about the initialization method performed
+% and supplementary fields in the case of multiple initializations
+%       4) global - info of all the intializations performed
+%       5) ratioinit - relative ratio between the best initialization and the
+%       other ones performed, namely |e_best-e_init|/(|e_best|+1e-8)
 %
 % The methods available are [default 'Manopt']:
 %   1) Manopt: it uses a product manifold for X1=W1*H1' and X2=W2*H2' and 
@@ -202,9 +206,21 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         H1_vec={H1_svd,H1_FS,H1_FSL,H1_FSR};
         H2_vec={H2_svd,H2_FS,H2_FSL,H2_FSR};
         info_vec={info_svd,info_FS,info_FSL,info_FSR};
-        [~,index]=min(err_vec);
+        [errbest,index]=min(err_vec);
+        ratioinit=zeros(4,1);
+        if errbest<1e-7
+            denbest=errbest;
+        else
+            denbest=errbest+1e-8;
+        end
+        for i=1:4
+            ratioinit(i)=abs(errbest-err_vec(i))/denbest;
+        end
+        ratioinit(ratioinit<1e-4)=0;
         info=info_vec{index};
         info.init=method{index};
+        info.global=info_vec;
+        info.ratioinit=ratioinit;
         W1=W1_vec{index};
         W2=W2_vec{index};
         H1=H1_vec{index};
