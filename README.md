@@ -16,4 +16,5 @@ The function HadDec.m implements all the algorithms discussed in the paper and, 
 
 In the repository 'tests' you can find the codes for generating the numerical experiments in the paper and also the script 'test_HadDec' to try the codes for small examples.
 
-Before running any code, please run Install.m to have all paths added. The codes need Manopt directory to run. 
+Before running any code, please run Install.m to have all paths added. To run the method 'Manopt', the codes need $\texttt{Manopt}$ software by
+[4] N. Boumal, B. Mishra, P.-A. Absil, and R. Sepulchre. Manopt, a Matlab toolbox for optimization on manifolds. The Journal of Machine Learning Research, 15(1):1455–1459, 2014.
