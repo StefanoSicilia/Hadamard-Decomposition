@@ -17,7 +17,7 @@
     Iter_H=3;
     rng(1)
     opts=struct('maxit',maxit,'init','all','tau',0.95,'theta',1e-4,...
-        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,'noloop',1); 
+        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,'noloops',1); 
     opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
     opts.maxtime=240; 
     r2=min([m,n,2*r]);
@@ -120,3 +120,71 @@
             Iters(k,j)=length(info{k,j}.err);
         end
     end
+
+    %% SVD relations
+    % Find the rank for which the rank-2r TSVD provides a lower relative 
+    % error than the best HadDec.
+
+    hadbest=min(relerr(:,1:end-1),[],2);
+    rstar_vec=zeros(3,1);
+    ratio=zeros(3,1);
+    for k=1:3
+        err_star=hadbest(k);
+        err_SVD=relerr(k,end);
+        rstar=r2;
+        if err_star>err_SVD
+            % rank-2r TSVD is better than rank-r HD
+            while err_star>err_SVD && rstar>1
+                rstar=rstar-1;
+                err_SVD=norm(Xsvd(:,:,k)-U{k}(:,1:rstar)*S{k}(1:rstar,1:rstar)*V{k}(:,1:rstar)','fro');
+            end
+        else
+            % rank-2r TSVD is worse than rank-r HD
+            while err_star<err_SVD && rstar<min(m,n)
+                rstar=rstar+1;
+                err_SVD=norm(Xsvd(:,:,k)-U{k}(:,1:rstar)*S{k}(1:rstar,1:rstar)*V{k}(:,1:rstar)','fro');
+            end
+        end
+        rstar_vec(k)=rstar;
+        ratio(k)=100*(rstar-r2)/r2;
+        info{k,end}=[relerr(k,end),rstar,ratio(k)];
+    end
+
+    %% Save the results (optional)
+    % save('./results\dog_info','info')
+    % 
+    % for j=1:n_methods+1
+    %     figure(j+3)
+    %     title('')
+    %     figstring=['./results./Images/dog_',methods{j},'.fig'];
+    %     pngstring=['./results./Images/dog_',methods{j},'.png'];
+    %     imwrite(frame2im(getframe(gca)),pngstring);
+    %     title(methods{j})
+    %     saveas(gcf,figstring)
+    % 
+    %     figstringdet=['./results./Images/dog_detail_',methods{j},'.fig'];
+    %     pngstringdet=['./results./Images/dog_detail_',methods{j},'.png'];
+    %     ax=gca;
+    %     ax.XLim=[270 530];
+    %     ax.YLim=[90 230];
+    %     title('')
+    %     exportgraphics(gcf, pngstringdet, 'Resolution', 300)
+    %     title(methods{j})
+    %     saveas(gcf,figstringdet)
+    % end
+    % figure(n_methods+5)
+    % title('')
+    % figstring='./results./Images/dog_original.fig';
+    % pngstring='./results./Images/dog_original.png';
+    % imwrite(frame2im(getframe(gca)),pngstring);
+    % title('original')
+    % saveas(gcf,figstring)
+    % figstringdet='./results./Images/dog_detail_original.fig';
+    % pngstringdet='./results./Images/dog_detail_original.png';
+    % ax=gca;
+    % ax.XLim=[270 530];
+    % ax.YLim=[90 230];
+    % title('')
+    % exportgraphics(gcf, pngstringdet, 'Resolution', 300)
+    % title('original')
+    % saveas(gcf,figstringdet)

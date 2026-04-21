@@ -16,7 +16,7 @@
         'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,'noloops',1);
     opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
     methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
-    types={'full-rank','low-rank','Had-low-rank'};
+    types={'general-rank','low-rank','Had-low-rank'};
     ranks=[10 15 20];
     n_methods=length(methods)-1;
     ntype=length(types);
@@ -29,6 +29,7 @@
     H2=cell(n_sample,nrank,n_methods,ntype);
     relerr=zeros(n_sample,nrank,n_methods+1,ntype);
     info=cell(n_sample,nrank,n_methods+1,ntype);
+    best_init=zeros(n_sample,nrank,n_methods,4,ntype);
 
     X=zeros(m,n,n_sample,nrank,ntype);
     normX=zeros(n_sample,nrank,ntype);
@@ -56,6 +57,15 @@
 
                 opts.maxtime=maxtimes(h);
 
+                % HDs
+                for j=1:n_methods
+                    opts.method=methods{j};
+                    [W1{i,k,j,h},H1{i,k,j,h},W2{i,k,j,h},H2{i,k,j,h},info{i,k,j,h}]=...
+                    HadDec(X(:,:,i,k,h),r,opts);
+                    relerr(i,k,j,h)=info{i,k,j,h}.err(end);
+                    best_init(i,k,j,:,h)=double(info{i,k,j,h}.ratioinit==0);
+                end
+
                 % TSVD 
                 normX(i,k,h)=norm(X(:,:,i,k,h),'fro');
                 Xsvd(:,:,i,k,h)=X(:,:,i,k,h)/normX(i,k,h);
@@ -66,18 +76,33 @@
                 relerr(i,k,end,h)=...
                     norm(Xsvd(:,:,i,k,h)-Ur2{i,k,h}*Sr2{i,k,h}*Vr2{i,k,h}','fro');
 
-                % HDs
-                for j=1:n_methods
-                    opts.method=methods{j};
-                    [W1{i,k,j,h},H1{i,k,j,h},W2{i,k,j,h},H2{i,k,j,h},info{i,k,j,h}]=...
-                    HadDec(X(:,:,i,k,h),r,opts);
-                    relerr(i,k,j,h)=info{i,k,j,h}.err(end);
+                % Comparison between HD and TSVD
+                hadbest=min(relerr(i,k,1:end-1,h));
+                rstar=r2;
+                err_star=hadbest;
+                err_SVD=relerr(i,k,end,h);
+                if err_star>err_SVD
+                    % rank-2r TSVD is better than rank-r HD
+                    while err_star>err_SVD && rstar>1
+                        rstar=rstar-1;
+                        err_SVD=norm(Xsvd(:,:,i,k,h)-U{i,k,h}(:,1:rstar)*S{i,k,h}(1:rstar,1:rstar)*V{i,k,h}(:,1:rstar)','fro');
+                    end
+                else
+                    % rank-2r TSVD is worse than rank-r HD
+                    while err_star<err_SVD && rstar<min(m,n)
+                        rstar=rstar+1;
+                        err_SVD=norm(Xsvd(:,:,i,k,h)-U{i,k,h}(:,1:rstar)*S{i,k,h}(1:rstar,1:rstar)*V{i,k,h}(:,1:rstar)','fro');
+                    end
                 end
+                ratio=100*(rstar-r2)/(r2);
+                info{i,k,end,h}=[err_SVD,rstar,ratio];
             end
         end
     end 
     t_global=toc(tstart);
 
+    % Best initializations
+    init_vec=permute(squeeze(sum(best_init)),[3 1 2 4]);
    
     %% Store and plot results
     close all
@@ -97,8 +122,8 @@
     end
 
     %% Save
-    save('./results\trend_mean','err_mean')
-    save('./results\trend_std','err_std')
-    save('./results\trend_relerr','relerr')
+    % save('./results\trend_info','info')
+    % save('./results\trend_err','relerr')
+    % save('./results\trend_init','init_vec')
     
     

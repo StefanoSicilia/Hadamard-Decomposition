@@ -54,7 +54,7 @@
     relerr(end)=norm(Xsvd-Ur2*Sr2*Vr2','fro');
    
     %% Display the results
-    %close all
+    close all
     figure
     lw=1.3;
     plotsettings={'m-','r-','b-','k-'};
@@ -100,7 +100,7 @@
     for k=1:n_methods
         figure
         imshow(sq*(W1{k}*H1{k}').*(W2{k}*H2{k}'))
-        title(methods{k})
+        %title(methods{k})
     end
     figure
     imshow(sq*Ur2*Sr2*Vr2'*normX)
@@ -108,4 +108,52 @@
     figure
     imshow(sq*X)
     title('original')
+
+    %% SVD relations
+    % Find the rank for which the rank-2r TSVD provides a lower relative 
+    % error than the best HadDec.
+
+    hadbest=min(relerr(1:end-1));
+    rstar=r2;
+    err_star=hadbest;
+    err_SVD=relerr(end);
+    if err_star>err_SVD
+        % rank-2r TSVD is better than rank-r HD
+        while err_star>err_SVD && rstar>1
+            rstar=rstar-1;
+            err_SVD=norm(Xsvd-U(:,1:rstar)*S(1:rstar,1:rstar)*V(:,1:rstar)','fro');
+        end
+    else
+        % rank-2r TSVD is worse than rank-r HD
+        while err_star<err_SVD && rstar<min(m,n)
+            rstar=rstar+1;
+            err_SVD=norm(Xsvd-U(:,1:rstar)*S(1:rstar,1:rstar)*V(:,1:rstar)','fro');
+        end
+    end
+    ratio=100*(rstar-r2)/(r2);
+    info{end}=[relerr(end),rstar,ratio];
+
+    %% Save the results (optional)
+    % save('./results\cameraman_info','info')
+    % 
+    % for k=1:n_methods+1
+    %     figure(k+2)
+    %     title('')
+    %     figstring=['./results./Images/cameraman_',methods{k},'.fig'];
+    %     pngstring=['./results./Images/cameraman_',methods{k},'.png'];
+    %     imwrite(frame2im(getframe(gca)),pngstring);
+    %     title(methods{k})
+    %     saveas(gcf,figstring)
+    % end
+    % figure(n_methods+4)
+    % title('')
+    % figstring='./results./Images/cameraman_original.fig';
+    % pngstring='./results./Images/cameraman_original.png';
+    % imwrite(frame2im(getframe(gca)),pngstring);
+    % title('original')
+    % saveas(gcf,figstring)
+    
+
+
+
 

@@ -26,6 +26,7 @@
     times=zeros(n_sample,nrank,n_methods);
     relerr=zeros(n_sample,nrank,n_methods+1);
     info=cell(n_sample,nrank,n_methods+1);
+    best_init=zeros(n_sample,nrank,n_methods,4);
 
     X=zeros(m,n,n_sample,nrank);
     normX=zeros(n_sample,nrank);
@@ -45,15 +46,6 @@
             r2=2*(r+1);
             X(:,:,i,r)=rand(m,r2)*rand(r2,n);
 
-            % TSVD
-            normX(i,r)=norm(X(:,:,i,r),'fro');
-            Xsvd(:,:,i,r)=X(:,:,i,r)/normX(i,r);
-            [U{i,r},S{i,r},V{i,r}]=svd(Xsvd(:,:,i,r));
-            Sr2{i,r}=S{i,r}(1:r2,1:r2);
-            Ur2{i,r}=U{i,r}(:,1:r2);
-            Vr2{i,r}=V{i,r}(:,1:r2);
-            relerr(i,r,end)=norm(Xsvd(:,:,i,r)-Ur2{i,r}*Sr2{i,r}*Vr2{i,r}','fro');
-    
             % HD
             for j=1:n_methods
                 opts.method=methods{j};
@@ -62,11 +54,44 @@
                 HadDec(X(:,:,i,r),r+1,opts);
                 times(i,r,j)=toc;
                 relerr(i,r,j)=info{i,r,j}.err(end);
+                best_init(i,r,j,:)=double(info{i,r,j}.ratioinit==0);
             end
+
+            % TSVD
+            normX(i,r)=norm(X(:,:,i,r),'fro');
+            Xsvd(:,:,i,r)=X(:,:,i,r)/normX(i,r);
+            [U{i,r},S{i,r},V{i,r}]=svd(Xsvd(:,:,i,r));
+            Sr2{i,r}=S{i,r}(1:r2,1:r2);
+            Ur2{i,r}=U{i,r}(:,1:r2);
+            Vr2{i,r}=V{i,r}(:,1:r2);
+            relerr(i,r,end)=norm(Xsvd(:,:,i,r)-Ur2{i,r}*Sr2{i,r}*Vr2{i,r}','fro');
+
+            % Comparison between HD and TSVD
+            hadbest=min(relerr(i,r,1:end-1));
+            rstar=r2;
+            err_star=hadbest;
+            err_SVD=relerr(i,r,end);
+            if err_star>err_SVD
+                % rank-2r TSVD is better than rank-r HD
+                while err_star>err_SVD && rstar>1
+                    rstar=rstar-1;
+                    err_SVD=norm(Xsvd(:,:,i,r)-U{i,r}(:,1:rstar)*S{i,r}(1:rstar,1:rstar)*V{i,r}(:,1:rstar)','fro');
+                end
+            else
+                % rank-2r TSVD is worse than rank-r HD
+                while err_star<err_SVD && rstar<min(m,n)
+                    rstar=rstar+1;
+                    err_SVD=norm(Xsvd(:,:,i,r)-U{i,r}(:,1:rstar)*S{i,r}(1:rstar,1:rstar)*V{i,r}(:,1:rstar)','fro');
+                end
+            end
+            ratio=100*(rstar-r2)/(r2);
+            info{i,r,end}=[err_SVD,rstar,ratio];
         end
     end 
     t_global=toc(tstart);
 
+    % Best initializations
+    init_vec=permute(squeeze(sum(best_init)),[3 1 2]);
    
     %% Store and plot results
     close all
@@ -84,10 +109,11 @@
     xlabel('Ranks')
     legend(methods,'Location','best')
 
-    %% Save
-    save('./results\mean_lr','err_mean')
-    save('./results\std_lr','err_std')
-    save('./results\lr_relerr','relerr')
+    %% Save the results (optional)
+    % save('./results\synt_lr_info','info')
+    % save('./results\synt_lr_err','relerr')
+    % save('./results\synt_lr_init','init_vec')
+
             
 
 

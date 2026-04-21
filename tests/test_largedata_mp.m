@@ -22,7 +22,7 @@
     H1=cell(nex,n_methods);
     W2=cell(nex,n_methods);
     H2=cell(nex,n_methods);
-    err=cell(nex,8);
+    err=cell(nex,10);
     errSVD=zeros(nex,1);
     relerr=zeros(nex,n_methods);
     info=cell(nex,n_methods);
@@ -112,11 +112,10 @@
             end
         end
         rstar_vec(i)=rstar;
-        ratio(i)=(rstar-2*ranks(i))/(2*ranks(i));
+        ratio(i)=100*(rstar-2*ranks(i))/(2*ranks(i));
+        err(i,9:10)={rstar_vec(i),ratio(i)};
     end
 
     %% Savings
-    % save('./results\info_largedata','info')
-    % save('./results\err_largedata','err')
-    % save('./results\rstar_largedata','rstar_vec')
-    % save('./results\ratio_largedata','ratio')
+    % save('./results\largedata_mp_info','info')
+    % save('./results\largedata_mp_err','err')
