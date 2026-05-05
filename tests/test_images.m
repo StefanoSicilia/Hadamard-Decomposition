@@ -1,5 +1,5 @@
 %% Script to test some images 
-% It takes 
+% It takes a bit less than 4 hours. 
 % The computational time is approximately given by 
 % n_methods*opts.maxtime*nex*nranks
 
@@ -16,7 +16,7 @@
     methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
     n_methods=length(methods)-1;
     models={'cameraman','cat',...
-        'dog1','dog2','dog3','football','olivettifaces'};
+        'dog1','dog2','dog3','olivettifaces'};
     nex=length(models);
     nranks=2;
     X=cell(nex,1);
@@ -76,7 +76,7 @@
         r2=min([m,n,2*r]);
         Xsvd{i}=X{i}/norm(X{i},'fro');
         [U,S,V]=svds(Xsvd{i},r2);
-        errSVD(i,1)=norm(Xsvd{i}-U(:,1:p)*S(1:p,1:p)*V(:,1:p)','fro');
+        errSVD(i,1)=norm(Xsvd{i}-U(:,1:p2)*S(1:p2,1:p2)*V(:,1:p2)','fro');
         errSVD(i,2)=norm(Xsvd{i}-U*S*V','fro');
 
         relerr(i,end,1)=errSVD(i,1);
@@ -156,7 +156,7 @@
         title(methods{j})
     end
     figure
-    [U,S,V]=svds(Xsvd{1},ranks(1,2));
+    [U,S,V]=svds(Xsvd{1},2*ranks(1,2));
     imshow(sq*U*S*V'*normX)
     title(methods{end})
     figure
@@ -180,7 +180,7 @@
     Xsvd_dog=zeros([size(X{3}),3]);
     figure
     for k=1:3
-        [U,S,V]=svds(Xsvd{k+2},ranks(k+2,2));
+        [U,S,V]=svds(Xsvd{k+2},2*ranks(k+2,2));
         A{end}(:,:,k)=(U*S*V');
         normX(k)=norm(X{k+2},'fro');
         Xsvd_dog(:,:,k)=Xsvd{k+2};
