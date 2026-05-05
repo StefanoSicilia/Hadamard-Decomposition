@@ -6,7 +6,7 @@ where $W_1,W_2\in \mathbb{R}^{m\times r}$ and $H_1,H_2\in \mathbb{R}^{n\times r}
 
 This code implements the algorithms from the paper
 
-[GSSV26] N. Gillis, S. Saha, S. Sicilia and A. Vandaele, Manifold-based Algorithms for the Hadamard Decomposition, April 2026.
+[GSSV26] N. Gillis, S. Saha, S. Sicilia and A. Vandaele, Manifold-based Algorithms for the Hadamard Decomposition, May 2026.
 
 The function HadDec.m implements all the algorithms discussed in the paper and, depending on the option chosen, it selects the method for the decomposition among
 1) Manopt: it uses a product manifold for $X_1=W_1H_1^\top$ and $X_2=W_2H_2^\top$ and it optimizes through $\texttt{Manopt}$ software to find an approximation $X\approx X_1\circ X_2$.
