@@ -54,8 +54,8 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
         while j<maxit && err(j)>tol && time(j)<maxtime
 
             t_iter=tic;
-            [W1y,H1p,vecnormH1y]=normalize(W1y,H1y);
-            [W2y,H2p,vecnormH2y]=normalize(W2y,H2y);
+            [W1y,H1p,vecnormH1y]=normalize(W1y,H1y,opts.rescale);
+            [W2y,H2p,vecnormH2y]=normalize(W2y,H2y,opts.rescale);
             Hp=face_split(H1p,H2p);
             A=Hp'*Hp;
             B=X*Hp;
@@ -73,8 +73,8 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
             W1y=W1n+beta*(W1n-W1);
             W2y=W2n+beta*(W2n-W2);
 
-            [H1y,W1p,vecnormW1y]=normalize(H1y,W1y);
-            [H2y,W2p,vecnormW2y]=normalize(H2y,W2y);
+            [H1y,W1p,vecnormW1y]=normalize(H1y,W1y,opts.rescale);
+            [H2y,W2p,vecnormW2y]=normalize(H2y,W2y,opts.rescale);
             Wp=face_split(W1p,W2p);
             C=Wp'*Wp;
             D=X'*Wp;
@@ -124,8 +124,8 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
         while j<maxit && err(j)>tol && time(j)<maxtime
 
             t_iter=tic;
-            [W1y,H1p,vecnormH1y]=normalize(W1y,H1y);
-            [W2y,H2p,vecnormH2y]=normalize(W2y,H2y);
+            [W1y,H1p,vecnormH1y]=normalize(W1y,H1y,opts.rescale);
+            [W2y,H2p,vecnormH2y]=normalize(W2y,H2y,opts.rescale);
             Hp=face_split(H1p,H2p);
             A=Hp'*Hp;
             B=X*Hp;
@@ -143,8 +143,8 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
             W1y=W1n+beta*(W1n-W1);
             W2y=W2n+beta*(W2n-W2);
 
-            [H1y,W1p,vecnormW1y]=normalize(H1y,W1y);
-            [H2y,W2p,vecnormW2y]=normalize(H2y,W2y);
+            [H1y,W1p,vecnormW1y]=normalize(H1y,W1y,opts.rescale);
+            [H2y,W2p,vecnormW2y]=normalize(H2y,W2y,opts.rescale);
             Wp=face_split(W1p,W2p);
             C=Wp'*Wp;
             D=X'*Wp;

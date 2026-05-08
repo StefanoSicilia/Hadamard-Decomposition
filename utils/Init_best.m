@@ -1,8 +1,9 @@
-function [W1,H1,W2,H2,info]=Init_best(X,r,noloopsflag)
+function [W1,H1,W2,H2,info]=Init_best(X,ranks,noloopsflag,sparsityflag)
 %% Init_best: Initialization for Hadamard decomposition
-% Computes an initialization for the Hadamard Decomposition of X based on 4 
-% possible choices, inspired by X=X1.*X2, X=W*H' with W and H with rows
-% that are vectorization of rank-1 matrix and a rank-r^2 SVD X=U*V'.
+% Given ranks=[r1,r2], it computes all initializations for the 
+% (r1,r2)-Hadamard Decomposition of X based on 4 possible choices, 
+% inspired by X=X1.*X2, X=W*H' with W and H with rows that are 
+% vectorizations of rank-1 matrix and by the rank-(r1*r2) SVD X=U*V'.
 %
 % 1) SVD-based (Wertz et al. 2025) X1=sqrt(abs(X)) X2=sgn(X).*X1
 % 2) Face Splitting (FS): W=proj_Bmr(U), H=proj_Bmr(V)
@@ -11,20 +12,27 @@ function [W1,H1,W2,H2,info]=Init_best(X,r,noloopsflag)
 %
 % It selects the best one according to the smallest error.
 %
-% Note: if r^2>min(size(A)), only SVD-based initialization is well defined
-% and hence just that will be considered.
+% Note: if r1*r2>min(size(A)), only SVD-based initialization is well 
+% defined and hence just that will be considered.
 
     [m,n]=size(X);
+    r1=ranks(1);
+    r2=ranks(2);
 
     % 1) SVD-based initialization
     M=sqrt(abs(X));
     N=sign(X).*M;
-    [U1,S1,V1]=svd(M);
-    W1temp=U1(:,1:r)*sqrt(S1(1:r,1:r));
-    H1temp=V1(:,1:r)*sqrt(S1(1:r,1:r));
-    [U2,S2,V2]=svd(N);
-    W2temp=U2(:,1:r)*sqrt(S2(1:r,1:r));
-    H2temp=V2(:,1:r)*sqrt(S2(1:r,1:r));
+    if sparsityflag
+        [U1,S1,V1]=svds(M,r1);
+        [U2,S2,V2]=svds(N,r2);
+    else
+        [U1,S1,V1]=svd(M);
+        [U2,S2,V2]=svd(N);
+    end
+    W1temp=U1(:,1:r1)*sqrt(S1(1:r1,1:r1));
+    H1temp=V1(:,1:r1)*sqrt(S1(1:r1,1:r1));
+    W2temp=U2(:,1:r2)*sqrt(S2(1:r2,1:r2));
+    H2temp=V2(:,1:r2)*sqrt(S2(1:r2,1:r2));
     err_SVD=norm(X-(W1temp*H1temp').*(W2temp*H2temp'),'fro');
     err=err_SVD;
     method='SVD-based';
@@ -34,16 +42,21 @@ function [W1,H1,W2,H2,info]=Init_best(X,r,noloopsflag)
     H2=H2temp;
 
     if noloopsflag
-        proj_Bmr=@(U) projBmr_noloop(U);
+        proj_Bmr=@(U) projBmr_noloop(U,r1,r2);
     else
-        proj_Bmr=@(U) projBmr_loop(U);
+        proj_Bmr=@(U) projBmr_loop(U,r1,r2);
     end
 
-    %% Rank-r^2 SVD
-    if r^2<=min([m,n])
-        [U,S,V]=svd(X);
-        U=U(:,1:r^2)*sqrt(S(1:r^2,1:r^2));
-        V=V(:,1:r^2)*sqrt(S(1:r^2,1:r^2));
+    %% Rank-r1*r2 SVD
+    rsvd=r1*r2;
+    if rsvd<=min([m,n])
+        if sparsityflag
+            [U,S,V]=svds(X,rsvd);
+        else
+            [U,S,V]=svd(X);
+        end
+        U=U(:,1:rsvd)*sqrt(S(1:rsvd,1:rsvd));
+        V=V(:,1:rsvd)*sqrt(S(1:rsvd,1:rsvd));
 
         % Face splitting initializations common matrices
         [W1temp,W2temp]=proj_Bmr(U);
@@ -86,6 +99,6 @@ function [W1,H1,W2,H2,info]=Init_best(X,r,noloopsflag)
     end
 
     % Final selection
-    info=struct('method',method,'err',0.5*err^2);
+    info=struct('method',method,'err',err);
     
 end

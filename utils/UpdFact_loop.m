@@ -5,7 +5,7 @@ function H2=UpdFact_loop(X,W1,H1,W2)
 % Efficient algorithms for the Hadamard decomposition, 2025.
 % Same as UpdFact_noloop, but it uses a loop.
 
-    H2=zeros(size(H1));
+    H2=zeros(size(H1,1),size(W2,2));
     for j=1:size(H2,1)
         H2(j,:)=hadLS(W1*H1(j,:)',W2,X(:,j))';
     end

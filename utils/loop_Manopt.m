@@ -6,12 +6,13 @@ function [W1,H1,W2,H2,info]=loop_Manopt(X,W1,H1,W2,H2,opts)
     % Initialization and parameters
     tstart=tic;
     [m,n]=size(X);
-    r=size(W1,2);
-    P=struct('X1',struct('U',W1,'S',eye(r),'V',H1),'X2',...
-        struct('U',W2,'S',eye(r),'V',H2));
+    r1=size(W1,2);
+    r2=size(W2,2);
+    P=struct('X1',struct('U',W1,'S',eye(r1),'V',H1),'X2',...
+        struct('U',W2,'S',eye(r2),'V',H2));
 
-    Mr.X1=fixedrankembeddedfactory(m,n,r);
-    Mr.X2=fixedrankembeddedfactory(m,n,r);
+    Mr.X1=fixedrankembeddedfactory(m,n,r1);
+    Mr.X2=fixedrankembeddedfactory(m,n,r2);
     manifold=productmanifold(Mr);
     problem.M=manifold;
     options.verbosity=0;
@@ -26,6 +27,7 @@ function [W1,H1,W2,H2,info]=loop_Manopt(X,W1,H1,W2,H2,opts)
     problem.egrad=@(P) grad_eval(P,X);
     problem.ehess=@(P,A) hess_eval(P,A,X,manifold);
     % warning('off', 'manopt:getHessian:approx')
+    warning('on')
     [P, ~, info] = trustregions(problem,P,options);
 
     % Output

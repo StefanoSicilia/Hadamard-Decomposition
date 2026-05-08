@@ -17,7 +17,7 @@ function [W1,H1,W2,H2,info]=loop_BCD(X,W1,H1,W2,H2,opts)
     time(1)=init_time;
     maxtime=opts.maxtime-init_time;
 
-    % Make X a full matrix
+    % If not, make X a full matrix
     if issparse(X)
         X=full(X);
     end

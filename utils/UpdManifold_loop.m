@@ -4,7 +4,8 @@ function [Z1,Z2]=UpdManifold_loop(Z1,Z2,G,h)
 % It follows the gradient system showed in the paper.
 % Same as UpdManifold_noloop, but it uses a loop.
 
-    [m,r]=size(Z1);
+    [m,r1]=size(Z1);
+    r2=size(Z2,2);
     rho1=vecnorm(Z1,2,2);
     rho2=vecnorm(Z2,2,2);
     rho=rho1.*rho2;
@@ -13,12 +14,13 @@ function [Z1,Z2]=UpdManifold_loop(Z1,Z2,G,h)
     X=Z1./rho1;
     Y=Z2./rho2;
     v=1:m;
+    h_original=h;
     for i=v(rho>1e-15)
-        Gi=reshape(G(i,:),r,r);
+        Gi=reshape(G(i,:),r2,r1);
         Gixi=Gi*X(i,:)';
         yiGixi=Y(i,:)*Gixi;
         sta=rho(i)/yiGixi;
-        h=min(h,0.95*sta).*(sta>0)+h.*(sta<=0);
+        h=min(h_original,0.95*sta).*(sta>0)+h_original.*(sta<=0);
         updater=sqrt(1-h/sta);
         rho1(i)=rho1(i).*updater;
         rho2(i)=rho2(i).*updater;

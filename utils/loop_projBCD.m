@@ -37,10 +37,12 @@ function [W1,H1,W2,H2,info]=loop_projBCD(X,W1,H1,W2,H2,opts)
     end
 
     % Update function
+    r1=size(W1,2);
+    r2=size(W2,2);
     if opts.noloops
-        proj_Bmr=@(A) projBmr_noloop(A);
+        proj_Bmr=@(A) projBmr_noloop(A,r1,r2);
     else
-        proj_Bmr=@(A) projBmr_loop(A);
+        proj_Bmr=@(A) projBmr_loop(A,r1,r2);
     end
 
     W1y=W1;
@@ -54,8 +56,8 @@ function [W1,H1,W2,H2,info]=loop_projBCD(X,W1,H1,W2,H2,opts)
         while j<maxit && err(j)>tol && time(j)<maxtime
             
             t_iter=tic;
-            [W1y,H1p,vecnormH1y]=normalize(W1y,H1y);
-            [W2y,H2p,vecnormH2y]=normalize(W2y,H2y);
+            [W1y,H1p,vecnormH1y]=normalize(W1y,H1y,opts.rescale);
+            [W2y,H2p,vecnormH2y]=normalize(W2y,H2y,opts.rescale);
             Hp=face_split(H1p,H2p);
             A=Hp'*Hp;
             B=X*Hp;
@@ -73,8 +75,8 @@ function [W1,H1,W2,H2,info]=loop_projBCD(X,W1,H1,W2,H2,opts)
             W1y=W1n+beta*(W1n-W1);
             W2y=W2n+beta*(W2n-W2);
     
-            [H1y,W1p,vecnormW1y]=normalize(H1y,W1y);
-            [H2y,W2p,vecnormW2y]=normalize(H2y,W2y);
+            [H1y,W1p,vecnormW1y]=normalize(H1y,W1y,opts.rescale);
+            [H2y,W2p,vecnormW2y]=normalize(H2y,W2y,opts.rescale);
             Wp=face_split(W1p,W2p);
             C=Wp'*Wp;
             D=X'*Wp;
@@ -124,8 +126,8 @@ function [W1,H1,W2,H2,info]=loop_projBCD(X,W1,H1,W2,H2,opts)
         while j<maxit && err(j)>tol && time(j)<maxtime
     
             t_iter=tic;
-            [W1y,H1p,vecnormH1y]=normalize(W1y,H1y);
-            [W2y,H2p,vecnormH2y]=normalize(W2y,H2y);
+            [W1y,H1p,vecnormH1y]=normalize(W1y,H1y,opts.rescale);
+            [W2y,H2p,vecnormH2y]=normalize(W2y,H2y,opts.rescale);
             Hp=face_split(H1p,H2p);
             A=Hp'*Hp;
             B=X*Hp;
@@ -143,8 +145,8 @@ function [W1,H1,W2,H2,info]=loop_projBCD(X,W1,H1,W2,H2,opts)
             W1y=W1n+beta*(W1n-W1);
             W2y=W2n+beta*(W2n-W2);
     
-            [H1y,W1p,vecnormW1y]=normalize(H1y,W1y);
-            [H2y,W2p,vecnormW2y]=normalize(H2y,W2y);
+            [H1y,W1p,vecnormW1y]=normalize(H1y,W1y,opts.rescale);
+            [H2y,W2p,vecnormW2y]=normalize(H2y,W2y,opts.rescale);
             Wp=face_split(W1p,W2p);
             C=Wp'*Wp;
             D=X'*Wp;
