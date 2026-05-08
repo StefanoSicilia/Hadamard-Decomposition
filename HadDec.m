@@ -1,18 +1,22 @@
 function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %% HadDec: rank-r Hadamard (entrywise) decomposition of a matrix
-% Given an m-by-n matrix X and a rank r, it computes an approximate 
-% Hadamard Decomposition X~= (W1*H1').*(W2*H2'), where W1 and W2 are m-by-r
-% matrices and H1 and H2 are n-by-r matrices.
+% Given an m-by-n matrix X and r=[r1,r2], it computes an approximate 
+% Hadamard Decomposition X~=(W1*H1').*(W2*H2'), where W1 and W2 are m-by-r1
+% matrices and H1 and H2 are n-by-r2 matrices.
 % It minimizes the objective function 
 % 0.5*norm(X-(W1*H1').*(W2*H2'))^2/norm(X,'fro')^2 
-% in three possible ways, depending on the method chosen (see below).
-% See the tests for some practical choices of the parameters. Otherwise the
-% function can be called by just specifying the rank r as 
-% [W1,H1,W2,H2,info]=HadDec(X,r) with default parameters (see below).
+% in four possible ways, depending on the method chosen (see below).
+% See the tests for some practical choices of the parameters. 
+%
+% The function can be called by just specifying the ranks r=[r1,r2] as 
+% [W1,H1,W2,H2,info]=HadDec(X,r) with default parameters (see below), or
+% even easier [W1,H1,W2,H2,info]=HadDec(X,r) with r an integer greater than
+% 1 such that r1=r2=r.
 %
 % Inputs:
 %   X: m-by-n matrix to be decomposed
 %   r: an integer greater than 1 for the rank-r Hadamard Decomposition
+%       or a vector with two ranks [r1,r2] greater than 1
 %   opts: struct with fields
 %       1) method - the method chosen (see below) [default 'Manopt']
 %       2) init - initialization method (see below) [default 'all']
@@ -32,13 +36,15 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       10) sparsity - flag to compute the error differently in the matrix   
 %       sparse case [default 0]
 %       11) noloops - flag for avoiding implementation loops [default 1]
-%       12) theta - parameter for the perturbation of the zero rows in the
+%       12) rescale - flag for activating the rescaling procedure (see
+%       normalize function) [default 1]
+%       13) theta - parameter for the perturbation of the zero rows in the
 %       initial matrices [default 1e-4]
 %
 % Outputs:
 %   the matrices W1,H1,W2 and H2 of the decomposition
 %   a struct 'info' with fields
-%       1) err - vector with the relative errors (objective function)
+%       1) err - vector with the relative errors 
 %       2) times - vector with the time required by each iteration
 %       3) init - string about the initialization method performed
 % and supplementary fields in the case of multiple initializations
@@ -50,10 +56,10 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %   1) Manopt: it uses a product manifold for X1=W1*H1' and X2=W2*H2' and 
 %   it optimizes through Manopt to find an approximation X~=X1.*X2.
 %   2) manBCD: it uses a 2 block coordinate descend algorithm for the
-%   rank-r^2 matrices W=face_split(W1,W2) and H=face_split(H1,H2) and it 
-%   optimizes on Bmr and Bnr respectively, where Bmr is the manifold of 
-%   matrices that admit a face-split decomposition.
-%   3) projBCD: alternative projections onto the manifold Bmr annd Bnr, using
+%   rank-(r1*r2) matrices W=face_split(W1,W2) and H=face_split(H1,H2) and  
+%   it optimizes on Bmr and Bnr respectively, where Bmr is the manifold of 
+%   matrices that admit a face-split decomposition with ranks r1 and r2.
+%   3) projBCD: alternative projections onto the manifold Bmr and Bnr, using
 %   the representation X~=WH', with W in Bmr and H in Bnr.
 %   4) BCD:it uses the 4 block coordinate descent algorithm described in
 %   the paper by Wertz et al., with extrapolation (momentum) provided in 
@@ -73,7 +79,19 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 
     % Initial checks and default parameters
     if nargin<2
-        error('Not enough input arguments: missing matrix and/or desired rank.')
+        error('Not enough input arguments: missing matrix and/or desired rank(s).')
+    end
+
+    if length(r)==2
+        r1=r(1);
+        r2=r(2);
+    else
+        r1=r;
+        r2=r;
+    end
+
+    if min([r1,r2])<=1
+        error('Each rank must be greater than 1.')
     end
 
     if nargin>3
@@ -82,8 +100,8 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 
     if nargin==2
         opts=struct('method','Manopt','init','all','maxit',1e6,...
-            'maxtime',10,'tol',1e-15,'tau',0.95,'Iter_W',1,'Iter_H',1,...
-            'sparsity',0,'noloops',1);
+            'maxtime',10,'tol',1e-15,'tau',0.95,'theta',1e-4,...
+            'Iter_W',2,'Iter_H',2,'sparsity',0,'noloops',1,'rescale',1);
         opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
     else 
         % nargin==3
@@ -109,13 +127,13 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             opts.theta=1e-4;
         end
         if ~isfield(opts,'Iter_W')
-            opts.Wblock=1;
+            opts.Wblock=2;
         end
         if ~isfield(opts,'Iter_H')
-            opts.Hblock=1;
+            opts.Hblock=2;
         end
         if ~isfield(opts,'sparsity')
-            opts.sparsity=0;
+            opts.sparsity=issparse(X);
         end
         if ~isfield(opts,'noloops')
             opts.noloops=1;
@@ -123,42 +141,60 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         if ~isfield(opts,'momentum')
             opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
         end
+        if ~isfield(opts,'rescale')
+            opts.rescale=1;
+        end
     end
 
-    % Normalization of X
+    % Normalization of X and zero matrix case
     normX=norm(X,'fro');
+    if normX==0
+        [m,n]=size(X);
+        W1=zeros(m,r1);
+        H1=zeros(n,r1);
+        W2=zeros(m,r2);
+        H2=zeros(n,r2);
+        info=struct('err',0,'time',0,'init',[],'global',[],'ratioinit',[]);
+        return
+    end
     X=X/normX;
 
     % Initialization and parameters
     info_init=opts.init;
+    opt_loop=opts.noloops;
+    opt_sparse=opts.sparsity;
+    ranks=[r1 r2];
     switch info_init
         case 'all'
-            WH=Init_all(X,r,opts.noloops,opts.sparsity);
+            WH=Init_all(X,ranks,opt_loop,opt_sparse);
             opts.maxtime=opts.maxtime/4;
         case 'best'
-            [W1,H1,W2,H2,info_init]=Init_best(X,r,opts.noloops);
+            [W1,H1,W2,H2,info_init]=Init_best(X,ranks,opt_loop,opt_sparse);
         case 'SVD-based'
-            [W1,H1,W2,H2]=Init_SVDbased(X,r,opts.noloops);
+            [W1,H1,W2,H2]=Init_SVDbased(X,ranks,opt_sparse);
         case 'FS'
-            [W1,H1,W2,H2]=Init_FS(X,r,opts.noloops);
+            [W1,H1,W2,H2]=Init_FS(X,ranks,opt_loop,opt_sparse);
         case 'FSL'
-            [W1,H1,W2,H2]=Init_FSL(X,r,opts.noloops);
+            [W1,H1,W2,H2]=Init_FSL(X,ranks,opt_loop,opt_sparse);
         case 'FSR'
-            [W1,H1,W2,H2]=Init_FSR(X,r,opts.noloops);
+            [W1,H1,W2,H2]=Init_FSR(X,ranks,opt_loop,opt_sparse);
         case 'given'
             W1=opts.W1;
             H1=opts.H1;
             W2=opts.W2;
             H2=opts.H2;   
-            W1=W1/sqrt(normX);
-            H2=H2/sqrt(normX);
+            sqsqX=sqrt(sqrt(normX));
+            W1=W1/sqsqX;
+            H1=H1/sqsqX;
+            W2=W2/sqsqX;
+            H2=H2/sqsqX;
         case 'rand'
             rng(1)
             [m,n]=size(X);
-            W1=rand(m,r);
-            H1=rand(n,r);
-            W2=rand(m,r);
-            H2=rand(n,r);
+            W1=rand(m,r1);
+            H1=rand(n,r1);
+            W2=rand(m,r2);
+            H2=rand(n,r2);
         otherwise
             error('Initialization method not available.')
     end
@@ -179,11 +215,13 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 
     % Main computation
     theta=opts.theta;
-    if ~strcmp(opts.init,'all') && ~strcmp(opts.init,'sparse')
+    if ~strcmp(opts.init,'all') 
         % Single initialization 
         [W1,H1,W2,H2]=zero_rows_pert(W1,H1,W2,H2,theta);
         [W1,H1,W2,H2,info]=loop(W1,H1,W2,H2);
         info.init=info_init;
+        info.global=[];
+        info.ratioinit=[];
     else
         % Multiple initialization
         [W1,H1,W2,H2]=zero_rows_pert(WH.W1_svd,WH.H1_svd,WH.W2_svd,WH.H2_svd,theta);
