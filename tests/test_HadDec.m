@@ -1,10 +1,12 @@
 %% Script to test HadDec
 
     %% Choice of the example type
-    m=40;
+    m=16;
     n=m;
     r=floor(sqrt(min(m,n)));
-    eta=1e-4;
+    r1=r;
+    r2=2*r-r1;
+    
     nmax=4;
     example='random';
     rng(1)
@@ -12,24 +14,25 @@
         case 'random'
             X=rand(m,n);
         case 'randexact'
-            W1=randi(nmax,m,r);
-            H1=randi(nmax,n,r);
-            W2=randi(nmax,m,r);
-            H2=randi(nmax,n,r);
+            W1=randi(nmax,m,r1);
+            H1=randi(nmax,n,r1);
+            W2=randi(nmax,m,r2);
+            H2=randi(nmax,n,r2);
             X=(W1*H1').*(W2*H2');
         case 'randexactpert'
-            W1=randi(nmax,m,r);
-            H1=randi(nmax,n,r);
-            W2=randi(nmax,m,r);
-            H2=randi(nmax,n,r);
+            eta=1e-4;
+            W1=randi(nmax,m,r1);
+            H1=randi(nmax,n,r1);
+            W2=randi(nmax,m,r2);
+            H2=randi(nmax,n,r2);
             X=(W1*H1').*(W2*H2')+eta*randi(nmax,m,n);
         case 'zeroperts'
             X=zeros(m,n);
             X(m,:)=ones(n,1);
-            W1=[ones(1,r); zeros(m-1,r)];
-            H1=[ones(1,r); zeros(n-1,r)];
-            W2=[ones(1,r); zeros(m-1,r)];
-            H2=[ones(1,r); zeros(n-1,r)];
+            W1=[ones(1,r1); zeros(m-1,r1)];
+            H1=[ones(1,r1); zeros(n-1,r1)];
+            W2=[ones(1,r2); zeros(m-1,r2)];
+            H2=[ones(1,r2); zeros(n-1,r2)];
         otherwise
             error('Example type not available.')
     end
@@ -37,14 +40,16 @@
     %% Methods parameters
     maxit=1e6;
     tol=1e-16;
-    Iter_W=4;
-    Iter_H=4;
+    Iter_W=2;
+    Iter_H=2;
     opts=struct('maxit',maxit,'init','all','tau',0.95,'theta',1e-4,...
-        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',0,'noloops',0);
+        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',0,...
+        'noloops',1,'rescale',1);
     if strcmp(opts.init,'given')
         opts.W1=W1; opts.H1=H1; opts.W2=W2; opts.H2=H2;   
     end
-    opts.momentum=[0.75,1,1.05,1.01,1.5,0.65];
+    opts.rescale=0;
+    opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
     opts.maxtime=1;
     methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
     n_methods=length(methods)-1;
@@ -60,21 +65,21 @@
     for k=1:n_methods
         opts.method=methods{k};
         tic;
-        [W1{k},H1{k},W2{k},H2{k},info{k}]=HadDec(X,r,opts);
+        [W1{k},H1{k},W2{k},H2{k},info{k}]=HadDec(X,[r1 r2],opts);
         times(k)=toc;
         relerr(k)=info{k}.err(end);
     end
 
     %% TSVD of rank 2r
-    r2=min([n,m,2*r]);
+    rsvd=min([n,m,r1+r2]);
     Xsvd=X/norm(X,'fro');
     tic;
     [U,S,V]=svd(Xsvd);
     times(end)=toc;
-    Sr2=S(1:r2,1:r2);
-    Ur2=U(:,1:r2);
-    Vr2=V(:,1:r2);
-    relerr(end)=norm(Xsvd-Ur2*Sr2*Vr2','fro');
+    Srsvd=S(1:rsvd,1:rsvd);
+    Ursvd=U(:,1:rsvd);
+    Vrsvd=V(:,1:rsvd);
+    relerr(end)=norm(Xsvd-Ursvd*Srsvd*Vrsvd','fro');
    
     %% Display the results
     close all

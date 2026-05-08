@@ -13,7 +13,8 @@
     Iter_W=2;
     Iter_H=2;
     opts=struct('maxit',maxit,'init','all','tau',0.95,'theta',1e-4,...
-        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,'noloops',1);
+        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,...
+        'noloops',1,'rescale',1);
     opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
     methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
     types={'general-rank','low-rank','Had-low-rank'};
