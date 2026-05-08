@@ -48,7 +48,6 @@
     if strcmp(opts.init,'given')
         opts.W1=W1; opts.H1=H1; opts.W2=W2; opts.H2=H2;   
     end
-    opts.rescale=0;
     opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
     opts.maxtime=1;
     methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
