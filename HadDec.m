@@ -19,7 +19,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       or a vector with two ranks [r1,r2] greater than 1
 %   opts: struct with fields
 %       1) method - the method chosen (see below) [default 'Manopt']
-%       2) init - initialization method (see below) [default 'all']
+%       2) init - initialization method (see below) [default 'FS']
 %       3) maxit - maximum number of iterations [default 1e6]
 %       4) maxtime - maximum time allowed for the computation (this does 
 %       not include the error computation, since it might be removed)
@@ -74,7 +74,8 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %   algorithm only for the one with lowest initial error (see HadDec_init)
 %   6) 'all' runs the algorithm for all the first four initializations and
 %   selects the best result in terms of final error (see HadDec_all_init)
-%   7) 'given' uses as starting points given matrices W1,H1,W2 and H2 
+%   7) 'given' uses as starting points given matrices W1=opts.W1, 
+%   H1=opts.H1, W2=opts.W2 and H2=opts.H2. 
 %   8) 'rand' random initialization
 
     % Initial checks and default parameters
@@ -82,12 +83,15 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         error('Not enough input arguments: missing matrix and/or desired rank(s).')
     end
 
-    if length(r)==2
-        r1=r(1);
-        r2=r(2);
-    else
-        r1=r;
-        r2=r;
+    switch length(r)
+        case 1
+            r1=r;
+            r2=r;
+        case 2
+            r1=r(1);
+            r2=r(2);
+        otherwise
+            error('There must be 1 rank (r) or 2 ranks (r1 and r2).')
     end
 
     if min([r1,r2])<=1
@@ -109,7 +113,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             opts.method='Manopt';
         end
         if ~isfield(opts,'init')
-            opts.init='all';
+            opts.init='FS';
         end
         if ~isfield(opts,'maxit')
             opts.maxit=1e6;
@@ -127,10 +131,10 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             opts.theta=1e-4;
         end
         if ~isfield(opts,'Iter_W')
-            opts.Wblock=2;
+            opts.Iter_W=2;
         end
         if ~isfield(opts,'Iter_H')
-            opts.Hblock=2;
+            opts.Iter_H=2;
         end
         if ~isfield(opts,'sparsity')
             opts.sparsity=issparse(X);
@@ -144,6 +148,10 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         if ~isfield(opts,'rescale')
             opts.rescale=1;
         end
+    end
+
+    if all(isfield(opts,{'W1','H1','W2','H2'}))
+        opts.init='given';
     end
 
     % Normalization of X and zero matrix case
