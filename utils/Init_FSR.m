@@ -6,7 +6,7 @@ function [W1,H1,W2,H2]=Init_FSR(X,ranks,noloopsflag,sparsityflag)
 %   -X~=W*H'where W is m-by-(r1*r2) and H is n-by-(r1*r2),
 %   -W~=face_split(W1,W2) and H~=face_split(H1,H2),
 % where ranks=[r1,r2].
-% The function assumes that min(m,n)>r1*r2 and it implements the
+% The function assumes that min(m,n)>=r1*r2 and it implements the
 % initialization 'FSR'. See HadDec_init for more details.
 
     r1=ranks(1);
@@ -20,7 +20,7 @@ function [W1,H1,W2,H2]=Init_FSR(X,ranks,noloopsflag,sparsityflag)
     if sparsityflag
         [U,S,~]=svds(X,r12);
     else
-        [U,S,~]=svd(X);
+        [U,S,~]=svd(X,'econ');
     end
     U=U(:,1:r12)*sqrt(S(1:r12,1:r12));
     [W1,W2]=proj_Bmr(U);

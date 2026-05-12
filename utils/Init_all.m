@@ -10,7 +10,7 @@ function output=Init_all(X,ranks,noloopsflag,sparsityflag)
 % 3) FS-Left: H=proj_Bmr(V), W=proj_Bmr((pinv(H)*X')')
 % 4) FS-right: W=proj_Bmr(U), H=proj_Bmr(pinv(W)*X)
 %
-% Note: it works only if r1*r2>min(size(A)).
+% Note: it works only if r1*r2>=min(size(A)).
 
     output=[];
     r1=ranks(1);
@@ -23,8 +23,8 @@ function output=Init_all(X,ranks,noloopsflag,sparsityflag)
         [U1,S1,V1]=svds(M,r1);
         [U2,S2,V2]=svds(N,r2);
     else
-        [U1,S1,V1]=svd(M);
-        [U2,S2,V2]=svd(N);
+        [U1,S1,V1]=svd(M,'econ');
+        [U2,S2,V2]=svd(N,'econ');
     end
     W1temp=U1(:,1:r1)*sqrt(S1(1:r1,1:r1));
     H1temp=V1(:,1:r1)*sqrt(S1(1:r1,1:r1));
@@ -47,7 +47,7 @@ function output=Init_all(X,ranks,noloopsflag,sparsityflag)
         U=U*sqrt(S);
         V=V*sqrt(S);
     else
-        [U,S,V]=svd(X);
+        [U,S,V]=svd(X,'econ');
         U=U(:,1:rsvd)*sqrt(S(1:rsvd,1:rsvd));
         V=V(:,1:rsvd)*sqrt(S(1:rsvd,1:rsvd));
     end

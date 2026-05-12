@@ -20,7 +20,7 @@ function [W1,H1,W2,H2]=Init_FS(X,ranks,noloopsflag,sparsityflag)
     if sparsityflag
         [U,S,V]=svds(X,rsvd);
     else
-        [U,S,V]=svd(X);
+        [U,S,V]=svd(X,'econ');
     end
     U=U(:,1:rsvd)*sqrt(S(1:rsvd,1:rsvd));
     V=V(:,1:rsvd)*sqrt(S(1:rsvd,1:rsvd));
