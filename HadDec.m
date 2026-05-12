@@ -25,14 +25,17 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       not include the error computation, since it might be removed)
 %       [default 10 seconds]
 %       5) tol - tolerance on the objective function [default 1e-16]
-%       6) momentum (not for Manopt) - parameters for the extrapolation 
-%       [default [0.75,1,1.05,1.01,1.5,0.6]]
+%       6) momentum (not for Manopt) - parameters for the extrapolation in 
+%       the form [beta, beta_tilde, gamma, gamma_tilde, eta, kappa]: beta
+%       is the extrapolation parameter, while the rest of the values are
+%       used to tune beta during the iteration (upper bounds, decreasing
+%       and increasing factors) [default [0.75,1,1.05,1.01,1.5,0.6]]
 %       7) tau (only for manBCD and projBCD) - parameter for gradient 
 %       descent stepsize [default 0.95]
 %       8) Iter_W (only for manBCD and projBCD) - number of iterations per 
-%       each W block [default 1]
+%       each W block [default 2]
 %       9) Iter_H (only for manBCD and projBCD) - number of iterations per 
-%       each H block [default 1]
+%       each H block [default 2]
 %       10) sparsity - flag to compute the error differently in the matrix   
 %       sparse case [default 0]
 %       11) noloops - flag for avoiding implementation loops [default 1]
@@ -45,6 +48,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %   the matrices W1,H1,W2 and H2 of the decomposition
 %   a struct 'info' with fields
 %       1) err - vector with the relative errors 
+%       norm(X-(W1*H1').*(W2*H2'))/norm(X,'fro')
 %       2) times - vector with the time required by each iteration
 %       3) init - string about the initialization method performed
 % and supplementary fields in the case of multiple initializations
@@ -125,7 +129,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             opts.tol=1e-15;
         end
         if ~isfield(opts,'tau')
-            opts.tau=1.5;
+            opts.tau=0.95;
         end
         if ~isfield(opts,'theta')
             opts.theta=1e-4;
@@ -174,6 +178,9 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     ranks=[r1 r2];
     switch info_init
         case 'all'
+            if prod(ranks)>min(size(X))
+                error('"all" init. can only be used when r1*r2<=min(m,n)')
+            end
             WH=Init_all(X,ranks,opt_loop,opt_sparse);
             opts.maxtime=opts.maxtime/4;
         case 'best'
@@ -181,10 +188,19 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         case 'SVD-based'
             [W1,H1,W2,H2]=Init_SVDbased(X,ranks,opt_sparse);
         case 'FS'
+            if prod(ranks)>min(size(X))
+                error('FS init. can only be used when r1*r2<=min(m,n)')
+            end
             [W1,H1,W2,H2]=Init_FS(X,ranks,opt_loop,opt_sparse);
         case 'FSL'
+            if prod(ranks)>min(size(X))
+                error('FSL init. can only be used when r1*r2<=min(m,n)')
+            end
             [W1,H1,W2,H2]=Init_FSL(X,ranks,opt_loop,opt_sparse);
         case 'FSR'
+            if prod(ranks)>min(size(X))
+                error('FSR init. can only be used when r1*r2<=min(m,n)')
+            end
             [W1,H1,W2,H2]=Init_FSR(X,ranks,opt_loop,opt_sparse);
         case 'given'
             W1=opts.W1;
