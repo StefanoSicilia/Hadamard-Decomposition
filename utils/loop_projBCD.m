@@ -93,9 +93,9 @@ function [W1,H1,W2,H2,info]=loop_projBCD(X,W1,H1,W2,H2,opts)
             H2n=H2y*diag(1./vecnormW2y);
             H1y=H1n+beta*(H1n-H1);
             H2y=H2n+beta*(H2n-H2);
-            Wy=Wp.*reshape(vecnormW2y*vecnormW1y',1,[]);
-            C=Wy'*Wy;
-            D=X'*Wy;
+            Wn=face_split(W1n,W2n);
+            C=Wn'*Wn;
+            D=X'*Wn;
     
             % Store time and error
             j=j+1;
@@ -163,13 +163,13 @@ function [W1,H1,W2,H2,info]=loop_projBCD(X,W1,H1,W2,H2,opts)
             H2n=H2y*diag(1./vecnormW2y);
             H1y=H1n+beta*(H1n-H1);
             H2y=H2n+beta*(H2n-H2);
-            Wy=Wp.*reshape(vecnormW2y*vecnormW1y',1,[]);
     
             % Store time and error
             j=j+1;
             time(j)=toc(t_iter)+time(j-1);
+            Wn=face_split(W1n,W2n);
             Hn=face_split(H1n,H2n);
-            err(j)=norm(X-Wy*Hn','fro');
+            err(j)=norm(X-Wn*Hn','fro');
     
             % Extrapolation
             if err(j)<err(j-1)
@@ -181,6 +181,7 @@ function [W1,H1,W2,H2,info]=loop_projBCD(X,W1,H1,W2,H2,opts)
                 err(j)=err(j-1);
                 betat=betaold;
                 beta=beta/eta;
+                extrapolflag=extrapolflag+1;
                 if extrapolflag>10000
                     beta=0;
                 end
