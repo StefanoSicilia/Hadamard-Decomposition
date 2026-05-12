@@ -52,7 +52,7 @@
     opts.init='FS';
 
     % Choose the time limit (in seconds) for each method in 'methods'
-    opts.maxtime=0.5;
+    opts.maxtime=5;
 
     % If your Matlab version is R2021b or newer, select opts.noloops=1,
     % (requires pagesvd built-in function), otherwise set opts.noloops=0.
@@ -82,9 +82,7 @@
     rsvd=min([n,m,2*r]);
     normX=norm(X,'fro');
     Xsvd=X/normX;
-    tic;
     [U,S,V]=svd(Xsvd);
-    times(end)=toc;
     Srsvd=S(1:rsvd,1:rsvd);
     Ursvd=U(:,1:rsvd);
     Vrsvd=V(:,1:rsvd);
