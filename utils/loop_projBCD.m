@@ -102,7 +102,7 @@ function [W1,H1,W2,H2,info]=loop_projBCD(X,W1,H1,W2,H2,opts)
             time(j)=toc(t_iter)+time(j-1);
             Hn=face_split(H1n,H2n);
             A=Hn'*Hn;
-            err(j)=sqrt(1-2*Hn(:)'*D(:)+C(:)'*A(:));
+            err(j)=sqrt(abs(1-2*Hn(:)'*D(:)+C(:)'*A(:)));
     
             % Extrapolation
             if err(j)<err(j-1)

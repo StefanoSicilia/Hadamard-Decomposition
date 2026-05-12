@@ -22,7 +22,7 @@ function [Z1,Z2]=UpdManifold_noloop(Z1,Z2,G,h)
         Gixi=pagemtimes(G3,Xp);
         yiGixi=pagemtimes(permute(Yp,[2 1 3]),Gixi);
         GitY=pagemtimes(permute(G3,[2 1 3]),Yp); 
-        sta=rho./reshape(yiGixi,[],1);
+        sta=rho(idx)./reshape(yiGixi,[],1);
         h=min(h,0.95*sta).*(sta>0)+h.*(sta<=0);
         updater=sqrt(1-h./sta);
         rho1(idx)=rho1(idx).*updater;
