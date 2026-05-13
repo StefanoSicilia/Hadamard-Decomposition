@@ -4,20 +4,13 @@
 % (runcases{1}+runcases{2})*opts.maxtime
 
     %% Methods parameters and initializations
-    maxit=1e6;
-    tol=1e-16;
-    Iter_W=2;
-    Iter_H=2;
-    opts=struct('maxit',maxit,'init','all','tau',0.95,'theta',1e-4,...
-        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,...
-        'noloops',1,'rescale',1);
-    opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
     opts.maxtime=800;
+    opts.init='all';
 
-    methods={'Manopt','BCD'};
+    methods={'manBCD','projBCD'};
     n_methods=length(methods);
-    models={'NG20','classic','ohscal','k1b','hitech','reviews','sports',...
-        'la1','la12','la2','tr11','tr23','tr41','tr45'};
+    models={'NG20','classic','la12','ohscal','sports','la1','la2',...
+        'reviews','k1b','hitech','tr41','tr45','tr11','tr23'};
     nex=length(models);
     W1=cell(nex,n_methods);
     H1=cell(nex,n_methods);
@@ -27,7 +20,7 @@
     errSVD=zeros(nex,1);
     relerr=zeros(nex,n_methods);
     info=cell(nex,n_methods);
-    runcases={2:14,[4:8,10:14]};
+    runcases={2:14,5:14};
     startex=min([runcases{1},runcases{2}]);
 
     %% Dimensions of the datasets
@@ -38,7 +31,7 @@
 
     %% Main computations
     tstart=tic;
-    ranks=[20 4 10 6 6 5 7 6 6 6 9 6 10 10];
+    ranks=[20 4 6 10 7 6 6 5 6 6 10 10 9 6];
    
     % Manopt
     for i=startex:nex

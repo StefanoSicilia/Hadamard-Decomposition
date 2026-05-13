@@ -4,20 +4,13 @@
 % n_methods*opts.maxtime*nex
 
     %% Methods parameters and initializations
-    maxit=1e6;
-    tol=1e-16;
-    Iter_W=2;
-    Iter_H=2;
-    opts=struct('maxit',maxit,'init','all','tau',0.95,'theta',1e-4,...
-        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,...
-        'noloops',1,'rescale',1);
-    opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
     opts.maxtime=800;
+    opts.init='all';
 
     methods={'manBCD','projBCD'};
     n_methods=length(methods);
-    models={'NG20','classic','ohscal','k1b','hitech','reviews','sports',...
-        'la1','la12','la2','tr11','tr23','tr41','tr45'};
+    models={'NG20','classic','la12','ohscal','sports','la1','la2',...
+        'reviews','k1b','hitech','tr41','tr45','tr11','tr23'};
     nex=length(models);
     W1=cell(nex,n_methods);
     H1=cell(nex,n_methods);
@@ -29,15 +22,9 @@
     info=cell(nex,n_methods);
     startex=1;
 
-    %% Dimensions of the datasets
-    % dims_m=[19949 7094 11162 2340 2301 4069 8580 3204 6279 3075 414 ...
-    %     204 878 690];
-    % dims_n=[43586 41681 11465 21839 10080 18483 14870 31472 31472 31472 ...
-    %     6429 5832 7454 8261];
-
     %% Main computations
     tic
-    ranks=[20 4 10 6 6 5 7 6 6 6 9 6 10 10];
+    ranks=[20 4 6 10 7 6 6 5 6 6 10 10 9 6];
     for i=startex:nex
         fprintf('%i) %s ...',i,models{i})
         r=ranks(i);
@@ -115,5 +102,5 @@
     end
 
     %% Savings
-    % save('./results\largedata_mp_info','info')
-    % save('./results\largedata_mp_err','err')
+    save('./results\largedata_mp_info','info')
+    save('./results\largedata_mp_err','err')

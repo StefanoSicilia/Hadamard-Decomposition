@@ -4,20 +4,12 @@
 % n_methods*opts.maxtime*nex*nranks
 
     %% Methods parameters and initializations
-    maxit=1e6;
-    tol=1e-16;
-    Iter_W=2;
-    Iter_H=2;
-    opts=struct('maxit',maxit,'init','all','tau',0.95,'theta',1e-4,...
-        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',1,...
-        'noloops',1,'rescale',1);
-    opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
     opts.maxtime=240;
+    opts.init='all';
 
     methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
     n_methods=length(methods)-1;
-    models={'cameraman','cat',...
-        'dog1','dog2','dog3','olivettifaces'};
+    models={'cameraman','cat','dog1','dog2','dog3','olivettifaces'};
     nex=length(models);
     nranks=2;
     X=cell(nex,1);

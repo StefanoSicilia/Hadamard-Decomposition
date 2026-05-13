@@ -1,85 +1,113 @@
-%% Script to test extrapolation and rescaling for HD
-% The computational time is approximately given by 
-% sum(maxtimes)*n_methods*nsample*ntype
+%% Script to extrapolation and rescaling on HD for synthetic data
+% Tests HD on three different types of random synthetic data (general,
+% low-rank and Hadamard-decomposable) with an without extrapolation and
+% with or without rescaling (see options 'momentum' and 'rescale' in
+% HadDec).
+% It takes approximately 2 hours.
 
     %% Methods, parameters and structures
-    m=100; 
+    m=400; 
     n=m;
-    r=10;
-    rsvd=2*r;
-    n_sample=5; 
+    nsample=10;
     
-    maxit=1e6;
-    tol=1e-16;
-    Iter_W=2;
-    Iter_H=2;
-    opts=struct('maxit',maxit,'init','all','tau',0.95,'theta',1e-4,...
-        'Iter_W',Iter_W,'Iter_H',Iter_H,'tol',tol,'sparsity',0,'noloops',1);
-    momentums={[0,0,0,0,1,0.6],[0.75,1,1.05,1.01,1.5,0.6],...
-        [0,0,0,0,1,0.6],[0.75,1,1.05,1.01,1.5,0.6]};
-    rescales=[0 0 1 1];
+    opts.init='all';
     methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
-    types={'none','extrapolation','rescaling','both'};
-    n_methods=length(methods)-1;
+    types={'general-rank','low-rank','Had-low-rank'};
+    kinds={'none','extrapolation','rescale','both'};
+    extra_vec_mp=[0,0,0,0,1; 0.25,1,1.05,1.01,1.5;...
+        0,0,0,0,1;0.25,1,1.05,1.01,1.5];
+    extra_vec_bcd=[0,0,0,0,1; 0.75,1,1.05,1.01,1.5;...
+        0,0,0,0,1;0.75,1,1.05,1.01,1.5];
+    scale_vec=[0,0,1,1];
+    ranks=[10 15 20];
+    nmethods=length(methods)-1;
     ntype=length(types);
-    maxtimes=5*[1 1 1 1];
+    nrank=length(ranks);
+    nkind=length(kinds);
+    maxtimes=[10 10 10]; 
 
-    W1=cell(n_sample,n_methods,ntype);
-    W2=cell(n_sample,n_methods,ntype);
-    H1=cell(n_sample,n_methods,ntype);
-    H2=cell(n_sample,n_methods,ntype);
-    relerr=zeros(n_sample,n_methods+1,ntype);
-    info=cell(n_sample,n_methods+1,ntype);
+    W1=cell(nsample,nrank,nmethods,ntype,nkind);
+    W2=cell(nsample,nrank,nmethods,ntype,nkind);
+    H1=cell(nsample,nrank,nmethods,ntype,nkind);
+    H2=cell(nsample,nrank,nmethods,ntype,nkind);
+    relerr=zeros(nsample,nrank,nmethods+1,ntype,nkind);
+    info=cell(nsample,nrank,nmethods+1,ntype,nkind);
 
-    X=zeros(m,n,n_sample);
-    normX=zeros(n_sample,1);
-    Xsvd=zeros(m,n,n_sample);
-    U=cell(n_sample,1);
-    S=cell(n_sample,1);
-    V=cell(n_sample,1);
-    Ur2=cell(n_sample,1);
-    Sr2=cell(n_sample,1);
-    Vr2=cell(n_sample,1);
+    X=zeros(m,n,nsample,nrank,ntype);
+    normX=zeros(nsample,nrank,ntype);
+    Xsvd=zeros(m,n,nsample,nrank,ntype);
+    U=cell(nsample,nrank,ntype);
+    S=cell(nsample,nrank,ntype);
+    V=cell(nsample,nrank,ntype);
+    Ursvd=cell(nsample,nrank,ntype);
+    Srsvd=cell(nsample,nrank,ntype);
+    Vrsvd=cell(nsample,nrank,ntype);
 
     %% Apply the methods 
-    tstart=tic;
-    for i=1:n_sample
+    for i=1:nsample
         fprintf('Element %i of the sample \n',i)
-        rng(i)
-        X(:,:,i)=rand(m,n);
+        for k=1:nrank
+            rng(i*(nrank+1)+k)
+            r=ranks(k);
+            rsvd=2*r;
+            X(:,:,i,k,1)=rand(m,n);
+            X(:,:,i,k,2)=rand(m,rsvd)*rand(rsvd,n);
+            X(:,:,i,k,3)=(rand(m,r)*rand(r,n)).*(rand(m,r)*rand(r,n));
 
-        for h=1:ntype
+            for h=1:ntype
 
-            opts.maxtime=maxtimes(h);
-            opts.momentum=momentums{h};
-            opts.rescale=rescales(h);
+                opts.maxtime=maxtimes(h);
+                j=1; 
+                l=1;
+                [W1{i,k,j,h,l},H1{i,k,j,h,l},W2{i,k,j,h,l},...
+                    H2{i,k,j,h,l},info{i,k,j,h,l}]=...
+                    HadDec(X(:,:,i,k,h),r,opts);
+                relerr(i,k,j,h,l)=info{i,k,j,h,l}.err(end);
 
-            % HDs
-            for j=1:n_methods
-                fprintf('%s ...',methods{j})
+                % HDs
+                for j=2:3
+                    opts.method=methods{j};
+                    for l=1:nkind
+                        opts.momentum=extra_vec_mp(l,:);
+                        opts.rescale=scale_vec(l);
+                        [W1{i,k,j,h,l},H1{i,k,j,h,l},W2{i,k,j,h,l},...
+                            H2{i,k,j,h,l},info{i,k,j,h,l}]=...
+                            HadDec(X(:,:,i,k,h),r,opts);
+                        relerr(i,k,j,h,l)=info{i,k,j,h,l}.err(end);
+                    end
+                end
+
+                j=4;
                 opts.method=methods{j};
-                [W1{i,j,h},H1{i,j,h},W2{i,j,h},H2{i,j,h},info{i,j,h}]=...
-                HadDec(X(:,:,i),r,opts);
-                relerr(i,j,h)=info{i,j,h}.err(end);
+                for l=[1,2]
+                    opts.momentum=extra_vec_bcd(l,:);
+                    [W1{i,k,j,h,l},H1{i,k,j,h,l},W2{i,k,j,h,l},...
+                        H2{i,k,j,h,l},info{i,k,j,h,l}]=...
+                        HadDec(X(:,:,i,k,h),r,opts);
+                    relerr(i,k,j,h,l)=info{i,k,j,h,l}.err(end);
+                end
+
+                 
+                % TSVD 
+                normX(i,k,h)=norm(X(:,:,i,k,h),'fro');
+                Xsvd(:,:,i,k,h)=X(:,:,i,k,h)/normX(i,k,h);
+                [U{i,k,h},S{i,k,h},V{i,k,h}]=svd(Xsvd(:,:,i,k,h));
+                Srsvd{i,k,h}=S{i,k,h}(1:rsvd,1:rsvd);
+                Ursvd{i,k,h}=U{i,k,h}(:,1:rsvd);
+                Vrsvd{i,k,h}=V{i,k,h}(:,1:rsvd);
+                relerr(i,k,end,h,1)=norm(Xsvd(:,:,i,k,h)-...
+                    Ursvd{i,k,h}*Srsvd{i,k,h}*Vrsvd{i,k,h}','fro');
+
             end
-            fprintf('\n')
         end
-
-        % TSVD 
-        normX(i)=norm(X(:,:,i),'fro');
-        Xsvd(:,:,i)=X(:,:,i)/normX(i);
-        [U{i},S{i},V{i}]=svd(Xsvd(:,:,i));
-        Sr2{i}=S{i}(1:rsvd,1:rsvd);
-        Ur2{i}=U{i}(:,1:rsvd);
-        Vr2{i}=V{i}(:,1:rsvd);
-        relerr(i,end,:)=norm(Xsvd(:,:,i)-Ur2{i}*Sr2{i}*Vr2{i}','fro')*ones(ntype,1);
-
     end 
-    t_global=toc(tstart);
    
-    %% Mean and std of the results
-    err_mean=squeeze(mean(relerr,1));
-    err_std=squeeze(std(relerr,1));
+    %% Store and plot results
+    err_mean=squeeze(mean(relerr,1))*100;
+    err_std=squeeze(std(relerr,1))*100;
 
+    %% Save
+    % save('./results\extrscale_info','info')
+    % save('./results\extrscale_err','relerr')
     
     
