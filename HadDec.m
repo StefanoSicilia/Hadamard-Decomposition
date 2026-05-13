@@ -26,10 +26,11 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       [default 10 seconds]
 %       5) tol - tolerance on the objective function [default 1e-16]
 %       6) momentum (not for Manopt) - parameters for the extrapolation in 
-%       the form [beta, beta_tilde, gamma, gamma_tilde, eta, kappa]: beta
-%       is the extrapolation parameter, while the rest of the values are
-%       used to tune beta during the iteration (upper bounds, decreasing
-%       and increasing factors) [default [0.75,1,1.05,1.01,1.5,0.6]]
+%       the form [beta, beta_tilde, gamma, gamma_tilde, eta]: beta is the 
+%       extrapolation parameter, while the rest of the values are used to
+%       tune beta during the iteration (upper bounds, decreasing and
+%       increasing factors) [default [0.25,1,1.05,1.01,1.5] for manBCD and
+%       projBCD, [0.75,1,1.05,1.01,1.5] for BCD]
 %       7) tau (only for manBCD and projBCD) - parameter for gradient 
 %       descent stepsize [default 0.95]
 %       8) Iter_W (only for manBCD and projBCD) - number of iterations per 
@@ -110,7 +111,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         opts=struct('method','Manopt','init','all','maxit',1e6,...
             'maxtime',10,'tol',1e-15,'tau',0.95,'theta',1e-4,...
             'Iter_W',2,'Iter_H',2,'sparsity',0,'noloops',1,'rescale',1);
-        opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
+        opts.momentum=[0.25,1,1.05,1.01,1.5];
     else 
         % nargin==3
         if ~isfield(opts,'method')
@@ -147,7 +148,11 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             opts.noloops=1;
         end
         if ~isfield(opts,'momentum')
-            opts.momentum=[0.75,1,1.05,1.01,1.5,0.6];
+            if strcmp(opts.method,'BCD')
+                opts.momentum=[0.75,1,1.05,1.01,1.5];
+            else
+                opts.momentum=[0.25,1,1.05,1.01,1.5];
+            end
         end
         if ~isfield(opts,'rescale')
             opts.rescale=1;
