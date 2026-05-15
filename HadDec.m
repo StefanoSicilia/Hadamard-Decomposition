@@ -87,7 +87,6 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     if nargin<2
         error('Not enough input arguments: missing matrix and/or desired rank(s).')
     end
-
     switch length(r)
         case 1
             r1=r;
@@ -98,19 +97,15 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         otherwise
             error('There must be 1 rank (r) or 2 ranks (r1 and r2).')
     end
-
     if min([r1,r2])<=1
         error('Each rank must be greater than 1.')
     end
-
     if nargin>3
         error('Too many input arguments.')
     end
-
     if nargin==2
         opts=[]; 
     end
-
     if ~isfield(opts,'method')
         opts.method='Manopt';
     end
@@ -157,10 +152,6 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     end
     if ~isfield(opts,'rescale')
         opts.rescale=1;
-    end
-
-    if all(isfield(opts,{'W1','H1','W2','H2'}))
-        opts.init='given';
     end
 
     % Normalization of X and zero matrix case
