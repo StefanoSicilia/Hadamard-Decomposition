@@ -219,7 +219,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             error('Initialization method not available.')
     end
 
-    % Selection of the method: BCD, Manopt, manBCD or proj
+    % Selection of the method: Manopt, manBCD, projBCD or BCD
     switch opts.method
         case 'Manopt'
             loop=@(W1,H1,W2,H2) loop_Manopt(X,W1,H1,W2,H2,opts);
@@ -246,16 +246,12 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
         % Multiple initialization
         [W1,H1,W2,H2]=zero_rows_pert(WH.W1_svd,WH.H1_svd,WH.W2_svd,WH.H2_svd,theta);
         [W1_svd,H1_svd,W2_svd,H2_svd,info_svd]=loop(W1,H1,W2,H2);
-        
         [W1,H1,W2,H2]=zero_rows_pert(WH.W1_FS,WH.H1_FS,WH.W2_FS,WH.H2_FS,theta);
         [W1_FS,H1_FS,W2_FS,H2_FS,info_FS]=loop(W1,H1,W2,H2);
-        
         [W1,H1,W2,H2]=zero_rows_pert(WH.W1_FSL,WH.H1_FSL,WH.W2_FSL,WH.H2_FSL,theta);
         [W1_FSL,H1_FSL,W2_FSL,H2_FSL,info_FSL]=loop(W1,H1,W2,H2);
-
         [W1,H1,W2,H2]=zero_rows_pert(WH.W1_FSR,WH.H1_FSR,WH.W2_FSR,WH.H2_FSR,theta);
         [W1_FSR,H1_FSR,W2_FSR,H2_FSR,info_FSR]=loop(W1,H1,W2,H2);
-
         err_vec=[info_svd.err(end),info_FS.err(end),...
             info_FSL.err(end),info_FSR.err(end)];
         method={'svd','FS','FSL','FSR'};
@@ -291,7 +287,6 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     H1=alpha*H1;
     W2=alpha*W2;
     H2=alpha*H2;
-
 end
 
 
