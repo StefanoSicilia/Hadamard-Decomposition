@@ -108,55 +108,55 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     end
 
     if nargin==2
-        opts=struct('method','Manopt','init','all','maxit',1e6,...
-            'maxtime',10,'tol',1e-15,'tau',0.95,'theta',1e-4,...
-            'Iter_W',2,'Iter_H',2,'sparsity',0,'noloops',1,'rescale',1);
-        opts.momentum=[0.25,1,1.05,1.01,1.5];
-    else 
-        % nargin==3
-        if ~isfield(opts,'method')
-            opts.method='Manopt';
-        end
-        if ~isfield(opts,'init')
+        opts=[]; 
+    end
+
+    if ~isfield(opts,'method')
+        opts.method='Manopt';
+    end
+    if ~isfield(opts,'init')
+        if all(isfield(opts,{'W1','H1','W2','H2'}))
+            opts.init='given';
+        else
             opts.init='FS';
         end
-        if ~isfield(opts,'maxit')
-            opts.maxit=1e6;
+    end
+    if ~isfield(opts,'maxit')
+        opts.maxit=1e6;
+    end
+    if ~isfield(opts,'maxtime')
+        opts.maxtime=10;
+    end
+    if ~isfield(opts,'tol')
+        opts.tol=1e-15;
+    end
+    if ~isfield(opts,'tau')
+        opts.tau=0.95;
+    end
+    if ~isfield(opts,'theta')
+        opts.theta=1e-4;
+    end
+    if ~isfield(opts,'Iter_W')
+        opts.Iter_W=2;
+    end
+    if ~isfield(opts,'Iter_H')
+        opts.Iter_H=2;
+    end
+    if ~isfield(opts,'sparsity')
+        opts.sparsity=issparse(X);
+    end
+    if ~isfield(opts,'noloops')
+        opts.noloops=1;
+    end
+    if ~isfield(opts,'momentum')
+        if strcmp(opts.method,'BCD')
+            opts.momentum=[0.75,1,1.05,1.01,1.5];
+        else
+            opts.momentum=[0.25,1,1.05,1.01,1.5];
         end
-        if ~isfield(opts,'maxtime')
-            opts.maxtime=10;
-        end
-        if ~isfield(opts,'tol')
-            opts.tol=1e-15;
-        end
-        if ~isfield(opts,'tau')
-            opts.tau=0.95;
-        end
-        if ~isfield(opts,'theta')
-            opts.theta=1e-4;
-        end
-        if ~isfield(opts,'Iter_W')
-            opts.Iter_W=2;
-        end
-        if ~isfield(opts,'Iter_H')
-            opts.Iter_H=2;
-        end
-        if ~isfield(opts,'sparsity')
-            opts.sparsity=issparse(X);
-        end
-        if ~isfield(opts,'noloops')
-            opts.noloops=1;
-        end
-        if ~isfield(opts,'momentum')
-            if strcmp(opts.method,'BCD')
-                opts.momentum=[0.75,1,1.05,1.01,1.5];
-            else
-                opts.momentum=[0.25,1,1.05,1.01,1.5];
-            end
-        end
-        if ~isfield(opts,'rescale')
-            opts.rescale=1;
-        end
+    end
+    if ~isfield(opts,'rescale')
+        opts.rescale=1;
     end
 
     if all(isfield(opts,{'W1','H1','W2','H2'}))
