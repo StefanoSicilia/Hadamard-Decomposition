@@ -1,5 +1,5 @@
 function [W1,H1,W2,H2]=Init_FS(X,ranks,noloopsflag,sparsityflag)
-%% Init_FS: 
+%% Init_FS:
 % It is an initialization for the Hadamard decomposition problem, that is:
 % given a matrix X of size m-by-n, compute two matrices W and H
 % such that:
