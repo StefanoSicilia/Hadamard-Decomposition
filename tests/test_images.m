@@ -7,7 +7,8 @@
     opts.maxtime=240;
     opts.init='all';
 
-    methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
+    %methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
+    methods={'manBCD','projBCD','TSVD'};
     n_methods=length(methods)-1;
     models={'cameraman','cat','dog1','dog2','dog3','olivettifaces'};
     nex=length(models);
@@ -190,40 +191,40 @@
         cellfun(@(x) 100*x,tableinfo(:,[5:2:end-3,end-2],:),...
         'UniformOutput', false);
 
-    save('./results\images_info','info')
-    save('./results\images_table','tableinfo')
-
-    for j=1:n_methods+1
-        figure(j+4)
-        title('')
-        figstring=['./results./Images/cameraman_',methods{j},'.fig'];
-        pngstring=['./results./Images/cameraman_',methods{j},'.png'];
-        imwrite(frame2im(getframe(gca)),pngstring);
-        title(methods{j})
-        saveas(gcf,figstring)
-    end
-    figure(n_methods+6)
-    title('')
-    figstring='./results./Images/cameraman_original.fig';
-    pngstring='./results./Images/cameraman_original.png';
-    imwrite(frame2im(getframe(gca)),pngstring);
-    title('original')
-    saveas(gcf,figstring)
-
-    for j=1:n_methods+1
-        figure(j+n_methods+6)
-        title('')
-        figstring=['./results./Images/dog_',methods{j},'.fig'];
-        pngstring=['./results./Images/dog_',methods{j},'.png'];
-        imwrite(frame2im(getframe(gca)),pngstring);
-        title(methods{j})
-        saveas(gcf,figstring)
-    end
-    figure(2*n_methods+8)
-    title('')
-    figstring='./results./Images/dog_original.fig';
-    pngstring='./results./Images/dog_original.png';
-    imwrite(frame2im(getframe(gca)),pngstring);
-    title('original')
-    saveas(gcf,figstring)
+    % save('./results\images2_info','info')
+    % save('./results\images2_table','tableinfo')
+    % 
+    % for j=1:n_methods+1
+    %     figure(j+n_methods)
+    %     title('')
+    %     figstring=['./results./Images/cameraman_',methods{j},'.fig'];
+    %     pngstring=['./results./Images/cameraman_',methods{j},'.png'];
+    %     imwrite(frame2im(getframe(gca)),pngstring);
+    %     title(methods{j})
+    %     saveas(gcf,figstring)
+    % end
+    % figure(2*n_methods+2)
+    % title('')
+    % figstring='./results./Images/cameraman_original.fig';
+    % pngstring='./results./Images/cameraman_original.png';
+    % imwrite(frame2im(getframe(gca)),pngstring);
+    % title('original')
+    % saveas(gcf,figstring)
+    % 
+    % for j=1:n_methods+1
+    %     figure(j+2*n_methods+2)
+    %     title('')
+    %     figstring=['./results./Images/dog_',methods{j},'.fig'];
+    %     pngstring=['./results./Images/dog_',methods{j},'.png'];
+    %     imwrite(frame2im(getframe(gca)),pngstring);
+    %     title(methods{j})
+    %     saveas(gcf,figstring)
+    % end
+    % figure(3*n_methods+4)
+    % title('')
+    % figstring='./results./Images/dog_original.fig';
+    % pngstring='./results./Images/dog_original.png';
+    % imwrite(frame2im(getframe(gca)),pngstring);
+    % title('original')
+    % saveas(gcf,figstring)
     
