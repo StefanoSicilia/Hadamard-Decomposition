@@ -7,8 +7,7 @@
     opts.maxtime=240;
     opts.init='all';
 
-    %methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
-    methods={'manBCD','projBCD','TSVD'};
+    methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
     n_methods=length(methods)-1;
     models={'cameraman','cat','dog1','dog2','dog3','olivettifaces'};
     nex=length(models);

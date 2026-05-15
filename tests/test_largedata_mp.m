@@ -81,9 +81,9 @@
         string=['./datasets/',models{i},'.mat'];
         X=load(string).dtm;
         Xsvd=X/norm(X,'fro');
-        if err_star>err_SVD
+        if err_star>err_SVD && rstar>1
             % rank-2r TSVD is better than rank-r HD
-            while err_star>err_SVD
+            while err_star>err_SVD && rstar<min(size(Xsvd))
                 rstar=rstar-1;
                 [U,S,V]=svds(Xsvd,rstar);
                 err_SVD=norm(Xsvd-U*S*V','fro');
@@ -102,5 +102,5 @@
     end
 
     %% Savings
-    save('./results\largedata_mp_info','info')
-    save('./results\largedata_mp_err','err')
+    % save('./results\largedata_mp2_info','info')
+    % save('./results\largedata_mp2_err','err')

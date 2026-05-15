@@ -79,13 +79,17 @@
                     % rank-2r TSVD is better than rank-r HD
                     while err_star>err_SVD && rstar>1
                         rstar=rstar-1;
-                        err_SVD=norm(Xsvd(:,:,i,k,h)-U{i,k,h}(:,1:rstar)*S{i,k,h}(1:rstar,1:rstar)*V{i,k,h}(:,1:rstar)','fro');
+                        err_SVD=norm(Xsvd(:,:,i,k,h)-...
+                            U{i,k,h}(:,1:rstar)*S{i,k,h}(1:rstar,1:rstar)...
+                            *V{i,k,h}(:,1:rstar)','fro');
                     end
                 else
                     % rank-2r TSVD is worse than rank-r HD
                     while err_star<err_SVD && rstar<rank(Xsvd(:,:,i,k,h))
                         rstar=rstar+1;
-                        err_SVD=norm(Xsvd(:,:,i,k,h)-U{i,k,h}(:,1:rstar)*S{i,k,h}(1:rstar,1:rstar)*V{i,k,h}(:,1:rstar)','fro');
+                        err_SVD=norm(Xsvd(:,:,i,k,h)-...
+                            U{i,k,h}(:,1:rstar)*S{i,k,h}(1:rstar,1:rstar)...
+                            *V{i,k,h}(:,1:rstar)','fro');
                     end
                 end
                 ratio=100*(rstar-r2)/(r2);
@@ -116,8 +120,8 @@
     end
 
     %% Save
-    % save('./results\trend_info','info')
-    % save('./results\trend_err','relerr')
-    % save('./results\trend_init','init_vec')
+    % save('./results\trend2_info','info')
+    % save('./results\trend2_err','relerr')
+    % save('./results\trend2_init','init_vec')
     
     
