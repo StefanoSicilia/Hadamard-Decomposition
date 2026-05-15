@@ -1,5 +1,5 @@
 function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
-%% HadDec: rank-r Hadamard (entrywise) decomposition of a matrix
+%% HadDec: rank-r Hadamard (entrywise) decomposition of a matri
 % Given an m-by-n matrix X and r=[r1,r2], it computes an approximate 
 % Hadamard Decomposition X~=(W1*H1').*(W2*H2'), where W1 and W2 are m-by-r1
 % matrices and H1 and H2 are n-by-r2 matrices.
