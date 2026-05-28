@@ -14,8 +14,8 @@ The function HadDec.m implements all the algorithms discussed in the paper and, 
 3) projBCD: projected block coordinate descent onto on $\mathcal{B}\_{m,r}$ and $\mathcal{B}\_{n,r}$.
 4) BCD: it uses the 4 block coordinate descent algorithm described in the paper [WVG25] S. Wertz, A. Vandaele, N.Gillis, Efficient algorithms for the Hadamard decomposition, 2025.
 
-In the repository 'tests' you can find the codes for generating the numerical experiments in the paper and also the script 'example_HadDec' to try the codes for small examples.
+In the repository 'tests' you can find the codes for generating the numerical experiments in the paper. The script 'example_HadDec' is a simple script to try the codes for small examples.
 
 Before running any code, please run Install.m to have all paths added. To run the method 'Manopt', the codes need $\texttt{Manopt}$ software by
 
-[4] N. Boumal, B. Mishra, P.-A. Absil, and R. Sepulchre. Manopt, a Matlab toolbox for optimization on manifolds. The Journal of Machine Learning Research, 15(1):1455–1459, 2014.
+[BMAS14] N. Boumal, B. Mishra, P.-A. Absil, and R. Sepulchre. Manopt, a Matlab toolbox for optimization on manifolds. The Journal of Machine Learning Research, 15(1):1455–1459, 2014.
