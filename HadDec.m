@@ -5,7 +5,7 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 % matrices and H1 and H2 are n-by-r2 matrices.
 % It minimizes the objective function 
 % 0.5*norm(X-(W1*H1').*(W2*H2'))^2/norm(X,'fro')^2 
-% in four possible ways, depending on the method chosen (see below).
+% in five possible ways, depending on the method chosen (see below).
 % See the tests for some practical choices of the parameters. 
 %
 % The function can be called by just specifying the ranks r=[r1,r2] as 
@@ -24,25 +24,27 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %       4) maxtime - maximum time allowed for the computation (this does 
 %       not include the error computation, since it might be removed)
 %       [default 10 seconds]
-%       5) tol - tolerance on the objective function [default 1e-16]
-%       6) momentum (not for Manopt) - parameters for the extrapolation in 
+%       5) tol - tolerance on the objective function [default 1e-15]
+%       6) toler - tolerance on the relative error at the k-th iteration
+%       |err(k-10)-err(k)|<toler*err(k-10) [default 1e-4]
+%       7) momentum (not for Manopt) - parameters for the extrapolation in 
 %       the form [beta, beta_tilde, gamma, gamma_tilde, eta]: beta is the 
 %       extrapolation parameter, while the rest of the values are used to
 %       tune beta during the iteration (upper bounds, decreasing and
 %       increasing factors) [default [0.25,1,1.05,1.01,1.5] for manBCD and
 %       projBCD, [0.75,1,1.05,1.01,1.5] for BCD]
-%       7) tau (only for manBCD and projBCD) - parameter for gradient 
+%       8) tau (only for manBCD and projBCD) - parameter for gradient 
 %       descent stepsize [default 0.95]
-%       8) Iter_W (only for manBCD and projBCD) - number of iterations per 
+%       9) Iter_W (only for manBCD and projBCD) - number of iterations per 
 %       each W block [default 2]
-%       9) Iter_H (only for manBCD and projBCD) - number of iterations per 
+%       10) Iter_H (only for manBCD and projBCD) - number of iterations per 
 %       each H block [default 2]
-%       10) sparsity - flag to compute the error differently in the matrix   
+%       11) sparsity - flag to compute the error differently in the matrix   
 %       sparse case [default 0]
-%       11) noloops - flag for avoiding implementation loops [default 1]
-%       12) rescale - flag for activating the rescaling procedure (see
-%       normalize function) [default 1]
-%       13) theta - parameter for the perturbation of the zero rows in the
+%       12) noloops - flag for avoiding implementation loops [default 1]
+%       13) rescale - flag for activating the rescaling procedure (see
+%       normalize function for manBCD and projBCD) [default 1]
+%       14) theta - parameter for the perturbation of the zero rows in the
 %       initial matrices [default 1e-4]
 %
 % Outputs:
@@ -69,6 +71,8 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
 %   4) BCD:it uses the 4 block coordinate descent algorithm described in
 %   the paper by Wertz et al., with extrapolation (momentum) provided in 
 %   opts.momentum.
+%   5) ManoptWH: it uses Manopt to optimize W and H on BmrxBnr (performs
+%   worse than the other methods, since it needs to build Bmr and Bnr)
 %
 % The initializations available are [default 'all'] :
 %   1) 'SVD-based' (see Init_SVDbased)
@@ -124,6 +128,9 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
     end
     if ~isfield(opts,'tol')
         opts.tol=1e-15;
+    end
+    if ~isfield(opts,'toler')
+        opts.toler=1e-4;
     end
     if ~isfield(opts,'tau')
         opts.tau=0.95;
@@ -229,6 +236,8 @@ function [W1,H1,W2,H2,info]=HadDec(X,r,opts)
             loop=@(W1,H1,W2,H2) loop_projBCD(X,W1,H1,W2,H2,opts);
         case 'BCD'
             loop=@(W1,H1,W2,H2) loop_BCD(X,W1,H1,W2,H2,opts);
+        case 'ManoptWH'
+            loop=@(W1,H1,W2,H2) loop_Manopt_WH(X,W1,H1,W2,H2,opts);
         otherwise
             error('Method not available')
     end

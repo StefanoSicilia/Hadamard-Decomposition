@@ -1,43 +1,79 @@
 %% Script to test HadDec on simple examples for rank-r HD
 % To run the test, follow the steps and choose among the possible options.
-% The script takes 20 seconds to run (in general opts.maxtime*n_methods).
 
-    %% 1) Choose an example: 'rand-gen','rand-lr','rand-hlr' or 'cameraman'
-    example='cameraman';
+    %% 1) Choose the example
+    % Possible choices: 'rand-gen','rand-lr','rand-hlr','rand-sparse',
+    % 'rand-sparse-hlr' or 'cameraman'
+    example='rand-hlr';
     
     rng(1)
     switch example
         case 'rand-gen' % Random generic example
-            m=16; 
-            n=m; 
+            m=9;
+            n=m;
             r=floor(sqrt(min(m,n))); 
-            X=rand(m,n);
+            X=randn(m,n);
             imageflag=0;
+            sparseflag=0;
         case 'rand-lr' % Random low-rank example
             m=16; 
             n=m; 
             r=floor(sqrt(min(m,n))); 
             X=rand(m,2*r)*rand(2*r,n);
             imageflag=0;
+            sparseflag=0;
         case 'rand-hlr' % Random example with exact Hadamard Decomposition
-            m=16; 
-            n=m; 
-            r=floor(sqrt(min(m,n))); 
-            W1=randi(m,r1); 
-            H1=randi(n,r1);
-            W2=randi(m,r2);
-            H2=randi(n,r2);
+            m=4096; 
+            n=m;
+            r1=12;
+            r2=r1;
+            r=[r1,r2];
+            W1=randn(m,r1); 
+            H1=randn(n,r1);
+            W2=randn(m,r2);
+            H2=randn(n,r2);
             X=(W1*H1').*(W2*H2');
             imageflag=0;
+            sparseflag=0;
+        case 'rand-sparse' % Random sparse example
+            m=500;
+            n=m;
+            r=5;
+            density=0.05;
+            X=sprand(m,n,density);
+            imageflag=0;
+            sparseflag=1;
+        case 'rand-sparse-hlr' % Random sparse Hadamard-Decomposable example
+            m=25;
+            n=m;
+            r=5;
+            density=0.3;
+            beta=sqrt(density);
+            [~,~,X1]=sparserandNMF(m,n,r,beta);
+            [~,~,X2]=sparserandNMF(m,n,r,beta);
+            X=sparse(X1).*sparse(X2);
+            imageflag=0;
+            sparseflag=1;
         case 'cameraman' % Cameraman image
             m=256;
             n=m;
             r=16;
             X=double(imread('cameraman.tif'));
             imageflag=1;
+            sparseflag=0;
+        case 'sparse_model'
+            i=1;
+            models={'NG20','classic','la12','ohscal','sports','la1',...
+                'la2','reviews','k1b','hitech','tr41','tr45','tr11','tr23'};
+            ranks=[20 4 6 10 7 6 6 5 6 6 10 10 9 6];
+            string=['./datasets/',models{i},'.mat'];
+            X=load(string).dtm;
+            [m,n]=size(X);
+            r=ranks(i);
         otherwise 
             error(['Example type not available. Try again with ',...
-                '"rand-gen", "rand-lr", "rand-hlr" or "cameraman".'])
+                '"rand-gen", "rand-lr", "rand-hlr", "rand-sparse" ',...
+                '"rand-sparse-hlr", "cameraman" or "sparse_model".'])
     end
 
     %% 2) Select the parameters 
@@ -52,7 +88,7 @@
     opts.init='FS';
 
     % Choose the time limit (in seconds) for each method in 'methods'
-    opts.maxtime=5;
+    opts.maxtime=200;
 
     % If your Matlab version is R2021b or newer, select opts.noloops=1,
     % (requires pagesvd built-in function), otherwise set opts.noloops=0.
@@ -82,10 +118,14 @@
     rsvd=min([n,m,2*r]);
     normX=norm(X,'fro');
     Xsvd=X/normX;
-    [U,S,V]=svd(Xsvd);
-    Srsvd=S(1:rsvd,1:rsvd);
-    Ursvd=U(:,1:rsvd);
-    Vrsvd=V(:,1:rsvd);
+    if sparseflag
+        [Ursvd,Srsvd,Vrsvd]=svds(Xsvd,rsvd);
+    else
+        [U,S,V]=svd(Xsvd);
+        Srsvd=S(1:rsvd,1:rsvd);
+        Ursvd=U(:,1:rsvd);
+        Vrsvd=V(:,1:rsvd);
+    end
     Xapprox{end}=normX*Ursvd*Srsvd*Vrsvd';
     relerr(end)=norm(X-Xapprox{end},'fro')/normX;
    
@@ -99,7 +139,7 @@
     % Plot relative error versus time
     close all
     lw=1.3;
-    plotsettings={'m-','r-','b-','k-'};
+    plotsettings={'m-','r-','b-','k-','g-'};
     figure
     for k=1:n_methods
         semilogy(info{k}.time,info{k}.err,plotsettings{k},'LineWidth',lw)
@@ -126,6 +166,8 @@
                 a=2; b=2;
             case {3,4}
                 a=2; b=3;
+            case 5
+                a=2; b=4;
         end
         subplot(a,b,1); 
         imshow(X/256); 
