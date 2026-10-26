@@ -1,7 +1,7 @@
 %% Script to test error trend of HD for synthetic data
-% It takes a bit more than 8 hours.
+% It takes approximately 15 hours.
 % The computational time is approximately given by 
-% sum(maxtimes)*n_methods*nsample*ntype
+% sum(maxtimes)*n_methods*n_sample*ntype
 
     %% Methods, parameters and structures
     m=400; 
@@ -10,12 +10,13 @@
     
     opts.init='all';
     methods={'Manopt','manBCD','projBCD','BCD','TSVD'};
-    types={'general-rank','low-rank','Had-low-rank'};
+    types={'general-rank','low-rank','Had-low-rank','Ill-Had-low-rank'};
     ranks=[10 15 20];
     n_methods=length(methods)-1;
     ntype=length(types);
     nrank=length(ranks);
-    maxtimes=[40 100 100];
+    starttype=1;
+    maxtimes=[40 100 100 100];
 
     W1=cell(n_sample,nrank,n_methods,ntype);
     W2=cell(n_sample,nrank,n_methods,ntype);
@@ -46,8 +47,15 @@
             X(:,:,i,k,1)=rand(m,n);
             X(:,:,i,k,2)=rand(m,r2)*rand(r2,n);
             X(:,:,i,k,3)=(rand(m,r)*rand(r,n)).*(rand(m,r)*rand(r,n));
+            [U1,~]=qr(rand(m,r),0);
+            S1=diag(logspace(6,0,r));
+            [V1,~]=qr(rand(n,r),0);
+            [U2,~]=qr(rand(m,r),0);
+            S2=S1;
+            [V2,~]=qr(rand(n,r),0);
+            X(:,:,i,k,4)=(U1*S1*V1').*(U2*S2*V2');
 
-            for h=1:ntype
+            for h=starttype:ntype
 
                 opts.maxtime=maxtimes(h);
 
@@ -108,7 +116,7 @@
     err_mean=squeeze(mean(relerr,1));
     err_std=squeeze(std(relerr,1));
     plotsettings={'magenta','red','blue','black',[0.75,0.5,0]};
-    for h=1:ntype
+    for h=starttype:ntype
         figure
         for j=1:n_methods+1
             hold on;
@@ -120,8 +128,8 @@
     end
 
     %% Save
-    % save('./results\trend2_info','info')
-    % save('./results\trend2_err','relerr')
-    % save('./results\trend2_init','init_vec')
+    % save('./results\trend4_info','info')
+    % save('./results\trend4_err','relerr')
+    % save('./results\trend4_init','init_vec')
     
     

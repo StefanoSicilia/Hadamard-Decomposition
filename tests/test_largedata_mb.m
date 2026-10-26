@@ -7,7 +7,7 @@
     opts.maxtime=800;
     opts.init='all';
 
-    methods={'manBCD','projBCD'};
+    methods={'Manopt','BCD'};
     n_methods=length(methods);
     models={'NG20','classic','la12','ohscal','sports','la1','la2',...
         'reviews','k1b','hitech','tr41','tr45','tr11','tr23'};
@@ -22,12 +22,6 @@
     info=cell(nex,n_methods);
     runcases={2:14,5:14};
     startex=min([runcases{1},runcases{2}]);
-
-    %% Dimensions of the datasets
-    % dims_m=[19949 7094 11162 2340 2301 4069 8580 3204 6279 3075 414 ...
-    %     204 878 690];
-    % dims_n=[43586 41681 11465 21839 10080 18483 14870 31472 31472 31472 ...
-    %     6429 5832 7454 8261];
 
     %% Main computations
     tstart=tic;
