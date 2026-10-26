@@ -9,6 +9,7 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
     t_start=tic;
     maxit=opts.maxit;
     tol=opts.tol;
+    toler=opts.toler;
     extrapar=opts.momentum;
     beta=extrapar(1); betat=extrapar(2); gamma=extrapar(3); 
     gammat=extrapar(4); eta=extrapar(5); betaold=beta;
@@ -24,6 +25,7 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
 
     % Relative error function for unit Frobenius norm X
     err=zeros(maxit,1);
+    reldiff=zeros(maxit-10,1);
     W=face_split(W1,W2);
     H=face_split(H1,H2);
     if sparseflag
@@ -34,6 +36,7 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
     else
         err(j)=norm(X-W*H','fro');
     end
+    reldiff(1:10)=toler+1;
 
     % Update function
     if opts.noloops
@@ -50,7 +53,7 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
     % Main cycle
     if sparseflag
         % Loop with computation of the error for a sparse matrix
-        while j<maxit && err(j)>tol && time(j)<maxtime
+        while j<maxit && err(j)>tol && reldiff(j)>toler && time(j)<maxtime
 
             t_iter=tic;
             [W1y,H1p,vecnormH1y]=normalize(W1y,H1y,opts.rescale);
@@ -113,10 +116,15 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
                 beta=beta/eta;
                 W1y=W1; W2y=W2; H1y=H1; H2y=H2;
             end 
+
+            % Relative difference between the error after 10 iterations
+            if j>10
+                reldiff(j)=abs(err(j-10)-err(j))/err(j-10);
+            end
         end
     else
         % Loop with a more accurate computation of the error 
-        while j<maxit && err(j)>tol && time(j)<maxtime
+        while j<maxit && err(j)>tol && reldiff(j)>toler && time(j)<maxtime
 
             t_iter=tic;
             [W1y,H1p,vecnormH1y]=normalize(W1y,H1y,opts.rescale);
@@ -176,6 +184,11 @@ function [W1,H1,W2,H2,info]=loop_manBCD(X,W1,H1,W2,H2,opts)
                 beta=beta/eta;
                 W1y=W1; W2y=W2; H1y=H1; H2y=H2;
             end 
+
+            % Relative difference between the error after 10 iterations
+            if j>10
+                reldiff(j)=abs(err(j-10)-err(j))/err(j-10);
+            end
         end
     end  
 

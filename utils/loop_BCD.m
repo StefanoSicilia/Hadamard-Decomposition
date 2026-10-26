@@ -13,9 +13,11 @@ function [W1,H1,W2,H2,info]=loop_BCD(X,W1,H1,W2,H2,opts)
     time=zeros(maxit,1);
     init_time=toc(tstart);
     err(1)=norm(X-(W1*H1').*(W2*H2'),'fro');
-    i=1;
+    j=1;
     time(1)=init_time;
     maxtime=opts.maxtime-init_time;
+    toler=opts.toler;
+    reldiff(1:10)=toler+1;
 
     % If not, make X a full matrix
     if issparse(X)
@@ -30,8 +32,8 @@ function [W1,H1,W2,H2,info]=loop_BCD(X,W1,H1,W2,H2,opts)
     end
 
     % Main cycle
-    while i<=maxit && err(i)>opts.tol && time(i)<maxtime
-        i=i+1;
+    while j<=maxit && err(j)>opts.tol && reldiff(j)>toler && time(j)<maxtime
+        j=j+1;
         t_iter=tic;
         H2old=H2; H1old=H1; W2old=W2; W1old=W1;
         H2=Upd_Fact(X,W1,H1,W2);
@@ -42,9 +44,9 @@ function [W1,H1,W2,H2,info]=loop_BCD(X,W1,H1,W2,H2,opts)
         H1=H1+beta*(H1-H1old);
         W1=Upd_Fact(X',H2,W2,H1);
         W1=W1+beta*(W1-W1old);
-        time(i)=toc(t_iter)+time(i-1);
-        err(i)=norm(X-(W1*H1').*(W2*H2'),'fro');
-        if err(i)<err(i-1)
+        time(j)=toc(t_iter)+time(j-1);
+        err(j)=norm(X-(W1*H1').*(W2*H2'),'fro');
+        if err(j)<err(j-1)
             betaold=beta;
             beta=min(betat,gamma*beta);
             betat=min(1,gammat*betat);
@@ -53,9 +55,12 @@ function [W1,H1,W2,H2,info]=loop_BCD(X,W1,H1,W2,H2,opts)
             beta=beta/eta;
             H2=H2old; H1=H1old; W2=W2old; W1=W1old;
         end
+        if j>10
+            reldiff(j)=abs(err(j-10)-err(j))/err(j-10);
+        end
     end
 
     % Output
-    info=struct('err',err(1:i),'time',time(1:i));
+    info=struct('err',err(1:j),'time',time(1:j));
 
 end
